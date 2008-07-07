@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE beans PUBLIC "-//SPRING//DTD BEAN//EN" "http://www.springframework.org/dtd/spring-beans.dtd">
+
+<!-- Beans to add to the current Application context definition -->
+  
+<beans>
+	
+    <bean id="formDataExportUrlMapping" class="org.springframework.web.servlet.handler.SimpleUrlHandlerMapping">
+    	<property name="mappings">
+            <props>
+	            <prop key="module/formdataexport/formDataExport.list">formDataExportList</prop>
+				<!--<prop key="module/formdataexport/formDataExport.form">formDataExportForm</prop>-->
+				<prop key="module/formdataexport/countForms.list">countFormsList</prop>
+			</props>
+		</property>
+	</bean>
+	
+	<bean parent="serviceContext">
+		<property name="moduleService">
+			<list>
+				<value>org.openmrs.module.formdataexport.FormDataExportService</value> <!-- service interface name -->
+				<bean class="org.springframework.transaction.interceptor.TransactionProxyFactoryBean">
+					<property name="transactionManager"><ref bean="transactionManager"/></property>
+					<property name="target">
+						<bean class="org.openmrs.module.formdataexport.impl.FormDataExportServiceImpl">
+							<property name="dao">
+								<bean class="org.openmrs.module.formdataexport.db.hibernate.HibernateFormDataExportDAO">
+									<property name="sessionFactory"><ref bean="sessionFactory"/></property>	
+								</bean>
+							</property>	
+						</bean>
+					</property>
+					<property name="preInterceptors">
+						<list>
+							<ref bean="authorizationInterceptor"/>
+						</list>
+					</property>
+					<property name="transactionAttributeSource">
+						<bean class="org.springframework.transaction.annotation.AnnotationTransactionAttributeSource"/>
+					</property>
+				</bean>
+			</list>
+		</property>
+	</bean>
+	
+	<!-- Controllers -->	
+	<bean id="formDataExportList" class="org.openmrs.module.formdataexport.web.controller.FormDataExportListController">
+		<property name="commandName"><value>formList</value></property>
+		<property name="formView"><value>/module/formdataexport/formDataExportList</value></property>
+		<property name="successView"><value>formDataExport.list</value></property>
+	</bean>
+	<bean id="countFormsList" class="org.openmrs.module.formdataexport.web.controller.CountFormsController">
+		<property name="commandName"><value>command</value></property>
+		<property name="formView"><value>/module/formdataexport/countFormsList</value></property>
+		<property name="successView"><value>countForms.list</value></property>
+	</bean>
+	<!-- /Controllers -->
+	
+	
+</beans>

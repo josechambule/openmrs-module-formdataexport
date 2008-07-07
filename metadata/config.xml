@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE module PUBLIC "-//OpenMRS//DTD OpenMRS Config 1.0//EN" "http://resources.openmrs.org/doctype/config-1.0.dtd">
+
+<module configVersion="1.0">
+	
+	<!-- Base Module Properties -->
+	<id>formdataexport</id>
+	<name>Form Data Export Module</name>
+	<version>0.7.5</version>
+	<package>org.openmrs.module.@MODULE_ID@</package>
+	<author>Justin Miranda</author>
+	<description>
+			OpenMRS Form Data Export Module
+	</description>
+	<activator>@MODULE_PACKAGE@.FormDataExportActivator</activator>
+
+	<updateURL>https://dev.openmrs.org/modules/download/formdataexport/update.rdf</updateURL>
+	<!-- /Base Module Properties -->
+	
+	<require_version>1.3.0.00</require_version>
+	
+	<!-- Extensions -->
+	<extension>
+		<point>org.openmrs.admin.list</point>
+		<class>@MODULE_PACKAGE@.extension.html.FormDataExportAdminExt</class>
+	</extension>
+	<!-- /Extensions -->
+	
+	
+	<!-- AOP --><!--
+	<advice>
+		<point>org.openmrs.api.FormService</point>
+		<class>@MODULE_PACKAGE@.advice.DuplicateFormAdvisor</class>
+	</advice>
+	--><!-- /AOP -->
+	
+	
+	<!-- Required Privileges -->
+	<privilege>
+		<name>Manage Forms</name>
+		<description>Allows users to manage forms</description>
+	</privilege>
+	<privilege>
+		<name>Manage Reports</name>
+		<description>Allows users to manage reports</description>
+	</privilege>
+	<privilege>
+		<name>Manage Form Exports</name>
+		<description>Allows users to manage form exports</description>
+	</privilege>
+	<!-- /Required Privileges -->
+
+
+	<!-- Required Global Properties -->
+	
+	<!-- /Required Global Properties -->
+	
+	<!--
+	<dwr>
+		<allow>
+			<create creator="new" javascript="DWRFormEntryService">
+				<param name="class" value="@MODULE_PACKAGE@.web.DWRFormEntryService"/>
+				<include method="enterForm"/>
+			</create>
+		</allow>
+
+		<signatures>
+			<![CDATA[
+			import @MODULE_PACKAGE@.web.DWRFormEntryService;
+			DWRFormEntryService.enterForm(Integer patientId, Integer formId, boolean useEncounter, List<String> fields);
+			]]>
+		</signatures>	
+	</dwr>
+	-->
+	
+	<!-- Servlets -->
+	<!-- Accessed through the url /pageContext()/moduleServlet/<moduleId>/<servlet-name> -->
+	
+	<!-- #### TEMPORARY ACCESS TO QUEUE PROCESSING SERVLETS (Burke 3/18/2006) #### -->
+	<!-- /Servlets -->
+	
+	
+	<!-- Internationalization -->
+	<!-- All message codes should start with moduleId.* -->
+	<messages>
+		<lang>en</lang>
+		<file>messages.properties</file>
+	</messages>
+	<messages>
+		<lang>fr</lang>
+		<file>messages_fr.properties</file>
+	</messages>
+	<messages>
+		<lang>es</lang>
+		<file>messages_es.properties</file>
+	</messages>
+	<!-- /Internationalization -->
+	
+	<!--
+	<mappingFiles>
+		
+	</mappingFiles>
+	-->
+</module>
