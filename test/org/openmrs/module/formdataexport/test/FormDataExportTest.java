@@ -1,5 +1,6 @@
 package org.openmrs.module.formdataexport.test;
 
+import java.io.File;
 import java.util.List;
 
 import org.apache.commons.logging.Log;
@@ -8,6 +9,7 @@ import org.openmrs.Cohort;
 import org.openmrs.Form;
 import org.openmrs.api.context.Context;
 import org.openmrs.cohort.CohortDefinition;
+import org.openmrs.cohort.CohortDefinitionItemHolder;
 import org.openmrs.module.formdataexport.FormDataExportService;
 import org.openmrs.test.BaseModuleContextSensitiveTest;
 
@@ -32,87 +34,60 @@ public class FormDataExportTest extends BaseModuleContextSensitiveTest {
 	    return false;
     }
     
+    
+    /**
+     * 
+     * @throws Exception
+     */
     public void testCohort() throws Exception { 
     	
-    	
-    	List<CohortDefinition> cohorts = 
+    	// Iterate over all cohort definitions
+    	List<CohortDefinitionItemHolder> cohortDefinitions = 
     		Context.getCohortService().getAllCohortDefinitions();
     	
-    	
-    	for (CohortDefinition cohort : cohorts) { 
+    	log.info("# cohort definitions: " + cohortDefinitions.size());
+    	for (CohortDefinitionItemHolder cohortItem : cohortDefinitions) {     		
+
+    		log.info("==================  " + cohortItem.getKey() + " = " + cohortItem.getName() + " ==================");
     		
-    		log.info("Cohort: " + cohort.hashCode() + " " + cohort);
+    		CohortDefinition definition = Context.getCohortService().getCohortDefinition(cohortItem.getKey());
+    		log.info("Cohort definition: " + definition.getClass());
+
+    		Cohort cohort = Context.getCohortService().evaluate(definition, null);
+    		log.info("Cohort: " + cohort.getName() + " has " + cohort.getSize() + " patients");
+    		
     	}
+    	
+    	CohortDefinition allPatientsCohortDefinition = Context.getCohortService().getAllPatientsCohortDefinition();
+    	Cohort allPatientsCohortFromDefinition = Context.getCohortService().evaluate(allPatientsCohortDefinition, null);
+    	log.info("All patients cohort (from definition): " + allPatientsCohortFromDefinition.getName() + " " + allPatientsCohortFromDefinition.getSize());
+    	
+    	Cohort allPatientsCohortFromPatientSetService = Context.getPatientSetService().getAllPatients();   	
+    	log.info("All patients cohort (direct): " + allPatientsCohortFromPatientSetService.getName() + " " + allPatientsCohortFromPatientSetService.getSize());
+    	    	
+    	
+    	assert(allPatientsCohortFromPatientSetService.getSize() == allPatientsCohortFromDefinition.getSize());
     	
     }
 	
+    
+    /**
+     * Test the form data export service.
+     * 
+     * @throws Exception
+     */
 	public void testFormDataExport() throws Exception { 
 		log.info("test form data export");
-		FormDataExportService service = 
-			(FormDataExportService) Context.getService(FormDataExportService.class);	
+		
+		String [] extraColumns = null; //{ "obsDatetime" };
+		String cohortToken = "1:org.openmrs.cohort.StaticCohortDefinition";    	
+    	Form form = Context.getFormService().getForm(new Integer(29));
+		
+    	File exportFile = 
+    		((FormDataExportService) 
+    				Context.getService(FormDataExportService.class)).exportEncounterData(form, cohortToken, extraColumns);
 
-		
-		Form form = Context.getFormService().getForm(42);
-		
-		Cohort patients = null;
-		// service.getPatientsHavingEncounters(form);
-		
-		
-		// Get patients
-		/*
-		PatientSet patients = new PatientSet();	 
-		patients.add(new Integer(12024));
-		patients.add(new Integer(12025));
-		patients.add(new Integer(12026));
-		patients.add(new Integer(12027));
-		patients.add(new Integer(12028));
-		patients.add(new Integer(12029));
-		*/
-		
-		/*
-		log.info("Form Fields: " + form.getFormFields().size());
-		// Order the fields by their field number and field part
-		//Comparator<FormField> comparator = new FormFieldComparator();
-		List<FormField> formFields = new LinkedList<FormField>();
-		formFields.addAll(form.getFormFields());
-		Collections.sort(formFields);
-		
-		log.info("Form fields: " + formFields.size());
-		
-		
-		for(FormField formField : formFields) { 
-			Field field = formField.getField();
-			StringBuffer fieldNumber = new StringBuffer();
-			
-			
-			if ("Concept".equals(field.getFieldType().getName())) { 
-				if (formField.getFieldNumber()!=null) { 
-					fieldNumber.append(formField.getFieldNumber());
-					if (formField.getFieldPart()!=null) 
-						fieldNumber.append(formField.getFieldPart());
-				}
-				else { 
-					fieldNumber.append("- ");
-				}
-				
-				log.info( fieldNumber.toString() + " [" + field.getFieldType().getName() + "] " + field.getName());
-				if (formField.getField().getConcept() != null) { 
-					for (ConceptSet cs : formField.getField().getConcept().getConceptSets()) { 
-						log.info("\t\t" + fieldNumber.toString() + " " + cs.getConcept().getName().getName());
-					}
-				}
-				
-			}
-			
-		}
-		*/
-		
-		String [] extras = null; //{ "obsDatetime" };
-		//service.exportFormData(form, patients, extras);
-		
-		service.exportEncounterData(form, patients, extras);
-
-		
+		log.info("Export data to " + exportFile.getAbsolutePath());
 	}
 
 	

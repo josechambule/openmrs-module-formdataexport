@@ -9,6 +9,20 @@ import org.openmrs.Form;
 
 public interface FormDataExportDAO {
 
+	
+	/**
+	 * 
+	 * @param cohort
+	 * @return
+	 */
 	public Map<Form, Integer> countForms(Cohort cohort);
+	
+	
+	/**
+	 * 
+	 * @param cohort
+	 * @param forms
+	 * @return
+	 */
 	public List<Encounter> getEncountersByForm(Cohort cohort, List<Form> forms);
 }

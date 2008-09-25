@@ -8,6 +8,7 @@ import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -21,14 +22,17 @@ import org.apache.commons.logging.LogFactory;
 import org.openmrs.Cohort;
 import org.openmrs.Concept;
 import org.openmrs.Encounter;
+import org.openmrs.EncounterType;
 import org.openmrs.Field;
 import org.openmrs.Form;
 import org.openmrs.FormField;
+import org.openmrs.Location;
 import org.openmrs.Obs;
 import org.openmrs.Patient;
 import org.openmrs.PatientIdentifier;
 import org.openmrs.api.APIException;
 import org.openmrs.api.context.Context;
+import org.openmrs.cohort.CohortDefinition;
 import org.openmrs.module.formdataexport.FormDataExportService;
 import org.openmrs.module.formdataexport.db.FormDataExportDAO;
 import org.openmrs.reporting.export.DataExportReportObject;
@@ -125,6 +129,41 @@ public class FormDataExportServiceImpl implements FormDataExportService {
 	
 	
 	/**
+	 * 
+	 * @param form
+	 * @param cohortKey
+	 * @param extras
+	 * @return
+	 */
+	public File exportEncounterData(Form form, String cohortKey, String [] extras) { 
+		
+		Cohort cohort = new Cohort();
+		
+		if (!cohortKey.isEmpty()) {     			
+			log.info("Using cohort " + cohortKey);
+			CohortDefinition cohortDefinition = Context.getCohortService().getCohortDefinition(cohortKey);
+			cohort = Context.getCohortService().evaluate(cohortDefinition, null);
+		} 
+		else { 
+			log.info("Using patients with encounters");
+			cohort = Context.getPatientSetService().
+				getPatientsHavingEncounters((EncounterType)null, null, form, null, null, null, null);	    			
+		} 
+
+		log.info("COHORT = " + cohort);
+		
+		// If cohort is still null, use the cohort of all patients in the system
+		if (cohort == null || cohort.isEmpty()) { 
+			CohortDefinition allPatientCohort = Context.getCohortService().getAllPatientsCohortDefinition();				
+			cohort = Context.getCohortService().evaluate(allPatientCohort, null);			
+		}					
+		
+		
+		return exportEncounterData(form, cohort, extras);
+	}
+	
+	
+	/**
 	 * Export form encounter data for the given form and patients.
 	 *  
 	 * @param 	form		the form to be exported	
@@ -159,7 +198,7 @@ public class FormDataExportServiceImpl implements FormDataExportService {
 			// Keeps track of the maximum number of columns to create for each concept
 			Map<Concept, Integer> fieldMap = new HashMap<Concept, Integer>();
 				
-			// Create the dataset 
+			// Create the dataset maps
 			populateMaps(dataMap, fieldMap, encounters);
 
 			// Write the column headers to the export buffer
@@ -186,6 +225,12 @@ public class FormDataExportServiceImpl implements FormDataExportService {
 	}
 	
 	
+	/**
+	 * 
+	 * @param dataMap
+	 * @param fieldMap
+	 * @param encounters
+	 */
 	public void populateMaps(Map<Encounter, Map<Concept, List<Obs>>> dataMap, 
 								Map<Concept, Integer> fieldMap, 
 								List<Encounter> encounters) { 
@@ -347,6 +392,13 @@ public class FormDataExportServiceImpl implements FormDataExportService {
 	}
 	
 	
+	
+	/**
+	 * Creates a column header for the given form field, as well as the number of times it appears in the form.
+	 * @param formField
+	 * @param occurrence
+	 * @return
+	 */
 	public String createColumnHeader(FormField formField, int occurrence) { 
 		
 		StringBuffer buffer = new StringBuffer();
@@ -398,6 +450,13 @@ public class FormDataExportServiceImpl implements FormDataExportService {
 		return buffer.toString();
 	}
 	
+	
+	/**
+	 * Gets the field number of the given form field.
+	 * 
+	 * @param formField
+	 * @return
+	 */
 	private String getFieldNumber(FormField formField) { 
 		StringBuffer buffer = new StringBuffer();
 		// Get the field number and part
@@ -436,6 +495,7 @@ public class FormDataExportServiceImpl implements FormDataExportService {
 
 	/**
 	 * Write all columns of data.  Columns are separated by commas, rows are separated by newlines.
+	 * 
 	 * @param form
 	 * @param dataMap
 	 * @param fieldMap
@@ -539,13 +599,16 @@ public class FormDataExportServiceImpl implements FormDataExportService {
 		}		
 	}
 
-	/**
-	 * 
+
+	
+	/* (non-Javadoc)
+	 * @see org.openmrs.module.formdataexport.FormDataExportService#countForms(org.openmrs.Cohort)
 	 */
 	public Map<Form, Integer> countForms(Cohort patients) {
 		return dao.countForms(patients);
 	}
-	
+
+
 
 	
 	
@@ -839,80 +902,8 @@ public class FormDataExportServiceImpl implements FormDataExportService {
 		
 	}
 	*/	
-	/**
-	 * Creates a form data export with a user-specified cohort.
-	 *
-	 * @param formId
-	 * @param cohortId
-	 * @param extras
-	public File exportFormData(Form form, Cohort cohort, String [] extras) throws Exception { 
-		PatientSet patients = getPatientsByCohort(cohort.getCohortId());
-		return exportFormData(form, patients, extras);
-	}
-	 */
 	
-	/**
-	 * Get a group of patients based on a pre-defined cohort.
-	 * 
-	 * @param cohortId
-	 * @param form
-	 * @return
-	 * @throws Exception
-	public PatientSet getPatientsByCohort(Integer cohortId) throws Exception { 
 
-		PatientSet patients = null;
-		
-		try { 
-			
-	
-			// Set the patient set if the user chose one 
-			Cohort cohort = Context.getCohortService().getCohort(new Integer(cohortId));		
-			if (cohort != null && cohort.getMemberIds() != null && !cohort.getMemberIds().isEmpty()) { 
-				log.info("Using cohort " + cohortId);
-				patients = new PatientSet();
-				List<Integer> tempIds = new LinkedList<Integer>();
-				tempIds.addAll(cohort.getMemberIds());
-				patients.setPatientIds(tempIds);
-			} 
-			
-			// The caller handles the null case
-			//if (patients == null) 
-			//	throw new ServletException("There are no patients for cohort " + cohortId);
-				
-			
-		}
-		catch (Exception e) { 
-			log.error("An error occurred while export form data ", e);
-			throw e;
-		}		
-		return patients;
-		
-	}
-	 */
-	
-	
-	/**
-	 * Get patients who have an encounter related to the specified form
-	 * 
-	 * @param form
-	 * @return
-	public PatientSet getPatientsHavingEncounters(Form form) { 
-		
-		EncounterType encounterType = form.getEncounterType();
-		Location location = null;
-		Date fromDate = null;
-		Date toDate = null;
-		Integer minCount = null;
-		Integer maxCount = null;
-		//List<EncounterType> encounterTypes = new ArrayList();
-		//encounterTypes.add(encounterType);
-		
-		return Context.getPatientSetService().
-			getPatientsHavingEncounters(encounterType, location, form, fromDate, toDate, minCount, maxCount);	
-	}
-	 */	
-	
-	
 }
 
 /**
@@ -932,25 +923,3 @@ class FormFieldComparator implements Comparator<FormField> {
 		return  compare;
 	}			 
 }			
-
-
-/*
-//Write out columns from the form
-for (FormField formField : formFields) {
-	Concept concept = formField.getField().getConcept();
-	if (concept != null) { 
-		String column = concept.getName().getShortName();
-		if (column == null || column.isEmpty()) {
-			column = concept.getConceptId().toString();
-		}
-		Integer numColumns = (fieldMap.get(concept)!=null)?fieldMap.get(concept):1;	
-		for (int i=0;i<numColumns;i++) {					
-			buffer.append("\"").append(column);
-			if (numColumns>1) buffer.append("_").append(i+1);
-			buffer.append("\"");
-			buffer.append(",");
-		}
-	}
-}
-*/
-

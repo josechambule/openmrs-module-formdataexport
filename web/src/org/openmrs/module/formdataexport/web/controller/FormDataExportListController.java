@@ -17,9 +17,12 @@ import javax.servlet.http.HttpServletResponse;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.openmrs.Cohort;
+import org.openmrs.EncounterType;
 import org.openmrs.Form;
 import org.openmrs.api.FormService;
 import org.openmrs.api.context.Context;
+import org.openmrs.cohort.CohortDefinition;
+import org.openmrs.cohort.CohortDefinitionItemHolder;
 import org.openmrs.module.formdataexport.FormDataExportService;
 import org.openmrs.web.WebConstants;
 import org.springframework.util.FileCopyUtils;
@@ -46,7 +49,7 @@ public class FormDataExportListController extends SimpleFormController {
 		//only fill the Object is the user has authenticated properly
 		if (Context.isAuthenticated()) {
 			FormService fs = (FormService) Context.getFormService();
-	    	return fs.getForms();
+	    	return fs.getAllForms();
 		}
     	
         return formList;
@@ -58,8 +61,6 @@ public class FormDataExportListController extends SimpleFormController {
     protected ModelAndView onSubmit(HttpServletRequest request, HttpServletResponse response, Object command, BindException errors) { 
     	log.info("Processing form data export submission");
     	Form form = null;
-
-    	Cohort cohort = new Cohort();
     	
     	try { 
     		int formId = ServletRequestUtils.getRequiredIntParameter(request, "formId");
@@ -68,55 +69,10 @@ public class FormDataExportListController extends SimpleFormController {
     	catch (ServletRequestBindingException e){ 
     		log.error("Could not parse form id", e);
     	}
-    	
-    	// Get form data export service
-		FormDataExportService service = 
-			(FormDataExportService) Context.getService(FormDataExportService.class);
-		
 
-
-    	// TODO Removed "select cohort" feature in order to simplify the module (need to restore)
-		/*
-    	try { 
-    		
-    		int cohortId = 
-    			ServletRequestUtils.getRequiredIntParameter(request, "cohortId");
-
-			log.info("Selected cohort " + cohortId);
-
-    		if (cohortId > 0) { 
-    			log.info("Retrieving patients from cohort " + cohortId);
-    			Cohort cohort = Context.getCohortService().getCohort(cohortId);        		
-    			if (cohort != null) patients.getPatientIds().addAll(cohort.getMemberIds());
-    			
-    		} 
-    		else if (cohortId == 0) { 
-    			log.info("Getting patients with an encounter for form " + form.getName());
-    			if (patients == null || patients.size() <= 0)	{			
-    				patients = service.getPatientsHavingEncounters(form);
-    			}				    			
-    		} 
-    		// Includes the case where cohortId = -1
-    		else {    			
-    			log.info("Setting patients to null in order to get all patients below");
-    			// make sure patient set is null 
-    			patients = null;
-    		}
-
-    		// If patient set is still null, get all patients
-			if (patients == null ||  patients.size() <= 0) { 
-				log.warn("Patient set is null, so passing all patients to data export");
-				patients = Context.getPatientSetService().getAllPatients();			
-			}			
-    	} 
-    	catch (ServletRequestBindingException e) { 
-    		log.error("Could not parse concept id ", e);
-    	}
-		 */
-
-    	
-    	
-    	String [] extraColumns = ServletRequestUtils.getStringParameters(request, "extraColumn");
+		// Get other request parameters
+		String cohortKey = ServletRequestUtils.getStringParameter(request, "cohortKey", "");
+		String [] extraColumns = ServletRequestUtils.getStringParameters(request, "extraColumn");
     	    	
 		try { 
 			
@@ -125,11 +81,11 @@ public class FormDataExportListController extends SimpleFormController {
 			if ( form != null ) { 
 				// Export data
 				File exportFile = 
-					service.exportEncounterData(form, cohort, extraColumns);
+					getFormDataExportService().exportEncounterData(form, cohortKey, extraColumns);
 				
 				// Check if the export file exists
 				if (exportFile == null || !exportFile.exists()) { 
-					throw new ServletException("The data export was not been generated");
+					throw new ServletException("The data export has not been generated");
 				}
 				// If it does, then we write it to the responses
 				else { 				
@@ -143,11 +99,16 @@ public class FormDataExportListController extends SimpleFormController {
 	
 					InputStream inputStream = null;
 					try { 
+						
 						inputStream = new FileInputStream(exportFile);
 						FileCopyUtils.copy(inputStream, response.getOutputStream());
-					} finally { 
+						
+					} 
+					finally { 
 						if (inputStream != null) { 
-							try { inputStream.close(); } 
+							try { 
+								inputStream.close(); 
+							} 
 							catch (Exception e) { log.error("Error closing export file ", e);}
 						}
 					}
@@ -176,12 +137,19 @@ public class FormDataExportListController extends SimpleFormController {
 	 */
     protected Map referenceData(HttpServletRequest request, Object command, Errors errors) {
 		Map<Object, Object> data = new HashMap<Object, Object>();
-		
-		
-    	// TODO Removed "select cohort" feature in order to simplify the module (need to restore)
-    	//data.put("cohortList", Context.getCohortService().getCohorts());
-
+		List<CohortDefinitionItemHolder> cohortList = Context.getCohortService().getAllCohortDefinitions();
+    	data.put("cohortList", cohortList);
     	return data;
+    }
+    
+
+    
+    /**
+     * 
+     * @return
+     */
+    public FormDataExportService getFormDataExportService() {     
+		return (FormDataExportService) Context.getService(FormDataExportService.class);
     }
 	
 	
