@@ -141,20 +141,22 @@ public class FormDataExportServiceImpl implements FormDataExportService {
 		
 		Cohort cohort = new Cohort();
 		
+		/*
 		if (!cohortKey.isEmpty()) {     			
 			log.info("Using cohort " + cohortKey);
 			CohortDefinition cohortDefinition = Context.getCohortService().getCohortDefinition(cohortKey);
 			cohort = Context.getCohortService().evaluate(cohortDefinition, null);
 		} 
-		else { 
-			//form.getEncounterType();
-			// Fixed NPE 
-			List<EncounterType> encounterTypes = new ArrayList<EncounterType>();					
-			encounterTypes.add(form.getEncounterType());
-			log.info("Using patients with encounters");
-			cohort = Context.getPatientSetService().
-				getPatientsHavingEncounters(encounterTypes, null, form, null, null, null, null);	    			
-		} 
+		*/
+		//else {
+		
+		// Fixed NPE 
+		List<EncounterType> encounterTypes = new ArrayList<EncounterType>();					
+		encounterTypes.add(form.getEncounterType());
+		log.info("Using patients with encounters");
+		cohort = Context.getPatientSetService().
+			getPatientsHavingEncounters(encounterTypes, null, form, null, null, null, null);	    			
+		//} 
 
 		log.info("COHORT = " + cohort);
 		
