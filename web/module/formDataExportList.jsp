@@ -28,7 +28,7 @@
 				</td>
 			</tr>
 			
-<!--  			
+<%--   			
 			<tr>
 				<td><spring:message code="formdataexport.FormDataExport.selectCohort"/></td>
 				<td>
@@ -41,7 +41,7 @@
 					</select>
 				</td>
 			</tr>
--->			
+--%>			
 			<!-- 
 			
 			<tr>

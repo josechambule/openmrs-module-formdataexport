@@ -54,6 +54,8 @@ public class FormDataExportServiceImpl implements FormDataExportService {
 	
 	private static String FORM_DATA_EXPORT_PREFIX = "FORM_DATA_EXPORT"; 
 
+	private static String FORM_DATA_EXPORT_EXTENSION = ".csv"; 
+
 	private static DateFormat DATE_FORMATTER = new SimpleDateFormat("dd-MMM-yyyy");
 	
 	private static final String DEFAULT_QUOTE = "\"";
@@ -101,8 +103,8 @@ public class FormDataExportServiceImpl implements FormDataExportService {
 	public static File createExportFile(String formName) {
         File dir = new File(OpenmrsUtil.getApplicationDataDirectory(), "dataExports");
         dir.mkdirs();
-        String filename = FORM_DATA_EXPORT_PREFIX + "_" + formName.replace(" ", "_");
-        filename = (new StringBuilder()).append(filename).toString();
+        String filename = FORM_DATA_EXPORT_PREFIX + "_" + formName.replace(" ", "_") + FORM_DATA_EXPORT_EXTENSION;
+        //filename = (new StringBuilder()).append(filename).toString();
         File file = new File(dir, filename);
         return file;
     }
@@ -145,9 +147,13 @@ public class FormDataExportServiceImpl implements FormDataExportService {
 			cohort = Context.getCohortService().evaluate(cohortDefinition, null);
 		} 
 		else { 
+			//form.getEncounterType();
+			// Fixed NPE 
+			List<EncounterType> encounterTypes = new ArrayList<EncounterType>();					
+			encounterTypes.add(form.getEncounterType());
 			log.info("Using patients with encounters");
 			cohort = Context.getPatientSetService().
-				getPatientsHavingEncounters((EncounterType)null, null, form, null, null, null, null);	    			
+				getPatientsHavingEncounters(encounterTypes, null, form, null, null, null, null);	    			
 		} 
 
 		log.info("COHORT = " + cohort);
@@ -487,6 +493,12 @@ public class FormDataExportServiceImpl implements FormDataExportService {
 		exportBuffer.append(DEFAULT_QUOTE);		
 		exportBuffer.append(columnHeader);
 		exportBuffer.append(DEFAULT_QUOTE);
+
+		exportBuffer.append(DEFAULT_COLUMN_SEPARATOR);
+		
+		exportBuffer.append(DEFAULT_QUOTE);		
+		exportBuffer.append(columnHeader + "_DATE");
+		exportBuffer.append(DEFAULT_QUOTE);
 		
 		// Add comma if this isn't the last comma
 		if (!isLast) exportBuffer.append(DEFAULT_COLUMN_SEPARATOR);
@@ -546,7 +558,7 @@ public class FormDataExportServiceImpl implements FormDataExportService {
 							
 								
 								
-								// If we encounter a concept set 
+								// If we encounter a concept set, we ignore it because we run into it later
 								if (concept.getConceptSets() != null && !concept.getConceptSets().isEmpty()) { 
 									/*
 									// Then we iterate over concepts in concept set and display values
@@ -573,21 +585,34 @@ public class FormDataExportServiceImpl implements FormDataExportService {
 								else {
 								
 								
-									// Always write a start quote
-									exportBuffer.append(DEFAULT_QUOTE);
 	
 									// If the observation list is not empty, display the first value 
+									Obs obs = null;
+									
 									List<Obs> obsList = columnData.get(concept);
 									if (obsList != null && !obsList.isEmpty()) {																	
-										exportBuffer.append(obsList.get(0).getValueAsString(Locale.US));											
-	
-										// NOTE - we need to remove observations from this list as we write them to the export buffer
+										obs = obsList.get(0);
+										// NOTE - we need to remove observations from this list as we write 
+										// them to the export buffer
+										//
+										// TODO Figure out why we have to do this?
 										obsList.remove(0);
-									
 									}
 									
-									// Always write a end quote and separator
-									exportBuffer.append(DEFAULT_QUOTE).append(DEFAULT_COLUMN_SEPARATOR);
+									
+									// Write out the observation value  
+									exportBuffer.append(DEFAULT_QUOTE);
+									exportBuffer.append((obs != null)?obs.getValueAsString(Locale.US):"");
+									exportBuffer.append(DEFAULT_QUOTE);		
+									
+									exportBuffer.append(DEFAULT_COLUMN_SEPARATOR);
+									
+									// Write out observation date
+									exportBuffer.append(DEFAULT_QUOTE);		
+									exportBuffer.append((obs!=null)?OpenmrsUtil.getDateFormat().format(obs.getObsDatetime()):"");									
+									exportBuffer.append(DEFAULT_QUOTE);
+
+									exportBuffer.append(DEFAULT_COLUMN_SEPARATOR);
 								
 								}															
 							}
@@ -908,7 +933,6 @@ public class FormDataExportServiceImpl implements FormDataExportService {
 
 /**
  * 
- * @author Justin Miranda
  */
 class FormFieldComparator implements Comparator<FormField> { 
 	public int compare(FormField ff1, FormField ff2) {
