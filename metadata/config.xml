@@ -6,7 +6,7 @@
 	<!-- Base Module Properties -->
 	<id>formdataexport</id>
 	<name>Form Data Export Module</name>
-	<version>0.7.7</version>
+	<version>0.8.1</version>
 	<package>org.openmrs.module.@MODULE_ID@</package>
 	<author>Justin Miranda</author>
 	<description>
@@ -38,15 +38,15 @@
 	<!-- Required Privileges -->
 	<privilege>
 		<name>Manage Forms</name>
-		<description>Allows users to manage forms</description>
+		<description>Allows users to manage forms.</description>
 	</privilege>
 	<privilege>
 		<name>Manage Reports</name>
-		<description>Allows users to manage reports</description>
+		<description>Allows users to manage reports.</description>
 	</privilege>
 	<privilege>
 		<name>Manage Form Exports</name>
-		<description>Allows users to manage form exports</description>
+		<description>Allows users to manage form exports.</description>
 	</privilege>
 	<!-- /Required Privileges -->
 

@@ -17,7 +17,7 @@ public class FormDataExportAdminExt extends AdministrationSectionExt {
 	}
 	
 	public String getRequiredPrivilege() {
-		return "Manage Data Exports, Manage Forms";
+		return "Manage Form Exports, Manage Reports, Manage Forms";
 	}
 	
 	public Map<String, String> getLinks() {
