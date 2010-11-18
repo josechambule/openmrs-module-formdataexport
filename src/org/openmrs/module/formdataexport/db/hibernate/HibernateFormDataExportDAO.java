@@ -3,6 +3,7 @@ package org.openmrs.module.formdataexport.db.hibernate;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.Date;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -11,6 +12,7 @@ import org.hibernate.CacheMode;
 import org.hibernate.Criteria;
 import org.hibernate.Query;
 import org.hibernate.SessionFactory;
+import org.hibernate.criterion.Expression;
 import org.hibernate.criterion.Restrictions;
 import org.openmrs.Cohort;
 import org.openmrs.Encounter;
@@ -60,26 +62,34 @@ public class HibernateFormDataExportDAO implements FormDataExportDAO {
 	 */
 	@SuppressWarnings("unchecked")
 	public List<Encounter> getEncountersByForm(Cohort cohort, List<Form> forms) {
-		
-		// default query
-		Criteria criteria = sessionFactory.getCurrentSession().createCriteria(Encounter.class);
-		criteria.setCacheMode(CacheMode.IGNORE);
-		
-		// this "where clause" is only necessary if patients were passed in
-		if (cohort != null && cohort.size() > 0)
-			criteria.add(Restrictions.in("patient.personId", cohort.getMemberIds()));
-		
-		criteria.add(Restrictions.eq("voided", false));
-		
-		if (forms != null && forms.size() > 0)
-			criteria.add(Restrictions.in("form", forms));
-		
-		criteria.addOrder(org.hibernate.criterion.Order.desc("patient.personId"));
-		criteria.addOrder(org.hibernate.criterion.Order.desc("encounterDatetime"));
-		
-		return criteria.list();
+		return getEncountersByForm(cohort, forms, null, null, null);
+	}	
 	
-	}		
+	public List<Encounter> getEncountersByForm(Cohort cohort, List<Form> forms, Date startDate, Date endDate, String firstLast){
+	    // default query
+        Criteria criteria = sessionFactory.getCurrentSession().createCriteria(Encounter.class);
+        criteria.setCacheMode(CacheMode.IGNORE);
+        
+        // this "where clause" is only necessary if patients were passed in
+        if (cohort != null && cohort.size() > 0)
+            criteria.add(Restrictions.in("patient.personId", cohort.getMemberIds()));
+        
+        criteria.add(Restrictions.eq("voided", false));
+        
+        if (forms != null && forms.size() > 0)
+            criteria.add(Restrictions.in("form", forms));
+        
+        if (startDate != null)
+            criteria.add(Expression.ge("encounterDatetime", startDate));
+        if (endDate != null)
+            criteria.add(Expression.le("encounterDatetime", endDate));
+        criteria.addOrder(org.hibernate.criterion.Order.asc("patient.personId"));
+        if (firstLast != null && firstLast.equals("last"))
+            criteria.addOrder(org.hibernate.criterion.Order.desc("encounterDatetime"));
+        else 
+            criteria.addOrder(org.hibernate.criterion.Order.asc("encounterDatetime"));
+        return criteria.list();
+	}
 	
 
 }

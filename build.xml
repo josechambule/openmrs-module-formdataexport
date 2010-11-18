@@ -121,5 +121,14 @@
 		<antcall target="deploy-module"/>
 	</target>	
 	
+	
+	<target name="update-jsps">
+			<property environment="env" />
+			<copy
+				todir="C:/Program Files/Apache Software Foundation/Tomcat 6.0/webapps/openmrs/WEB-INF/view/module/formdataexport">
+				<fileset dir="web/module" includes="*.jsp,*.htm" />
+			</copy>
+		</target>
+	
 
 </project>

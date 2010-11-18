@@ -7,9 +7,11 @@ import java.io.Writer;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
@@ -26,17 +28,18 @@ import org.openmrs.EncounterType;
 import org.openmrs.Field;
 import org.openmrs.Form;
 import org.openmrs.FormField;
-import org.openmrs.Location;
 import org.openmrs.Obs;
 import org.openmrs.Patient;
-import org.openmrs.PatientIdentifier;
-import org.openmrs.api.APIException;
+import org.openmrs.PatientIdentifierType;
 import org.openmrs.api.context.Context;
-import org.openmrs.cohort.CohortDefinition;
 import org.openmrs.module.formdataexport.FormDataExportService;
 import org.openmrs.module.formdataexport.db.FormDataExportDAO;
-import org.openmrs.reporting.export.DataExportReportObject;
-import org.openmrs.reporting.export.SimpleColumn;
+import org.openmrs.module.htmlformentry.HtmlForm;
+import org.openmrs.module.htmlformentry.HtmlFormEntryService;
+import org.openmrs.module.htmlformentry.export.HtmlFormEntryExportUtil;
+import org.openmrs.module.reporting.cohort.definition.CohortDefinition;
+import org.openmrs.module.reporting.cohort.definition.service.CohortDefinitionService;
+import org.openmrs.module.reporting.evaluation.EvaluationContext;
 import org.openmrs.util.FormUtil;
 import org.openmrs.util.OpenmrsUtil;
 
@@ -111,126 +114,239 @@ public class FormDataExportServiceImpl implements FormDataExportService {
 
 
 
-	/**
-	 * Convenience method to add most common export columns.
-	 * 
-	 * @param export
-	 */
-	public void addStaticColumns(DataExportReportObject export) { 
-		
-		if ( export != null ) { 
-			export.getColumns().add(new SimpleColumn("PATIENT_ID", "$!{fn.patientId}"));		
-			export.getColumns().add(new SimpleColumn("IMB_ID", "$!{fn.getPatientIdentifier('IMB ID')}"));		
-			export.getColumns().add(new SimpleColumn("GENDER", "$!{fn.getPatientAttr('Person', 'gender')}"));		
-			export.getColumns().add(new SimpleColumn("AGE", "$!{fn.calculateAge($fn.getPatientAttr('Person', 'birthdate'))}"));		
-			export.getColumns().add(new SimpleColumn("BIRTHDATE", "$!{fn.formatDate('short', $fn.getPatientAttr('Person', 'birthdate'))}"));		
-			export.getColumns().add(new SimpleColumn("LOCATION", "$!{fn.getPatientAttr('PatientIdentifier', 'location').getName()}"));		
-			export.getColumns().add(new SimpleColumn("ENCOUNTER_DATE", "$!{fn.formatDate('short', $!{fn.getLastEncounterAttr([''], 'encounterDatetime')})}"));		
-		}
+//	/**
+//	 * Convenience method to add most common export columns.
+//	 * 
+//	 * @param export
+//	 */
+//	public void addStaticColumns(DataExportReportObject export) { 
+//		
+//		if ( export != null ) { 
+//			export.getColumns().add(new SimpleColumn("PATIENT_ID", "$!{fn.patientId}"));		
+//			export.getColumns().add(new SimpleColumn("IMB_ID", "$!{fn.getPatientIdentifier('IMB ID')}"));		
+//			export.getColumns().add(new SimpleColumn("GENDER", "$!{fn.getPatientAttr('Person', 'gender')}"));		
+//			export.getColumns().add(new SimpleColumn("AGE", "$!{fn.calculateAge($fn.getPatientAttr('Person', 'birthdate'))}"));		
+//			export.getColumns().add(new SimpleColumn("BIRTHDATE", "$!{fn.formatDate('short', $fn.getPatientAttr('Person', 'birthdate'))}"));		
+//			export.getColumns().add(new SimpleColumn("LOCATION", "$!{fn.getPatientAttr('PatientIdentifier', 'location').getName()}"));		
+//			export.getColumns().add(new SimpleColumn("ENCOUNTER_DATE", "$!{fn.formatDate('short', $!{fn.getLastEncounterAttr([''], 'encounterDatetime')})}"));		
+//		}
+//	}
+	
+
+	public File exportEncounterData(Form form, Integer sectionIndex, Date startDate, Date endDate, String cohortQueryUUID, List<String> extraCols, String firstLast, Integer quantity){
+	    
+	    //setup the cohort:
+	    Cohort cohort = new Cohort();
+	    if (cohortQueryUUID != null && !cohortQueryUUID.equals("")){
+	        CohortDefinition cd = Context.getService(CohortDefinitionService.class).getDefinitionByUuid(cohortQueryUUID);
+	        if (cd != null){
+	            //TODO:  add parameters input to this module's UI?
+	            EvaluationContext ev = new EvaluationContext();
+	            cohort = Context.getService(CohortDefinitionService.class).evaluate(cd, ev);
+	        }
+	        
+	    } else {
+	        List<EncounterType> encounterTypes = new ArrayList<EncounterType>();                   
+	        encounterTypes.add(form.getEncounterType());
+	        log.info("Using patients with encounters");
+	        cohort = Context.getPatientSetService().getPatientsHavingEncounters(Collections.singletonList(form.getEncounterType()), null, form, null, null, null, null);
+	    }
+
+	    StringBuffer exportBuffer = new StringBuffer();
+                    
+        // Get all encounters for the given form
+	    //NOTE:  firstLast only affects sort order.  If no quantity given, and first or last requested,
+	    //set quantity to 1 by default
+	    if (quantity == null && firstLast != null && !firstLast.equals(""))
+            quantity = 1;
+	    
+        List<Encounter> encounters = dao.getEncountersByForm(cohort, Collections.singletonList(form), startDate, endDate, firstLast);
+        // Filter by quantity if given
+        if (quantity != null){
+           Map<Patient, List<Encounter>> map = new LinkedHashMap<Patient, List<Encounter>>(); 
+           for (Encounter enc:encounters){
+               if (!map.containsKey(enc.getPatient())){
+                   ArrayList<Encounter> eList = new ArrayList<Encounter>();
+                   eList.add(enc);
+                   map.put(enc.getPatient(), eList);
+               } else {
+                   List<Encounter> eList = map.get(enc.getPatient());
+                   if (eList.size() <= quantity){
+                       eList.add(enc);
+                       map.put(enc.getPatient(), eList);
+                   }
+               }
+           }
+           List<Encounter> ret = new ArrayList<Encounter>();
+           for (Map.Entry<Patient, List<Encounter>> e : map.entrySet()){
+               for (Encounter enc : e.getValue()){
+                   ret.add(enc);
+               }
+           }
+           encounters = ret;
+        }
+
+        HtmlForm htmlForm = Context.getService(HtmlFormEntryService.class).getHtmlFormByForm(form);
+        //filter by section if requested
+        if (sectionIndex != null && htmlForm != null){
+            try {
+                String newXML = HtmlFormEntryExportUtil.getSectionAsFormXml(htmlForm,sectionIndex);
+                htmlForm.setXmlData(newXML);
+                List<Encounter> ret = new ArrayList<Encounter>();
+                for (Encounter enc: encounters){
+                    ret.add(HtmlFormEntryExportUtil.trimEncounterToMatchForm(enc, htmlForm));
+                }
+                encounters = ret;
+            } catch (Exception ex){
+                throw new RuntimeException("Unable to trim htmlform by section.",ex);
+            }
+        }
+        
+        
+        if (htmlForm != null){
+            
+            //HTMLFORM
+            HtmlFormEntryExportUtil.buildHtmlFormExport(encounters, htmlForm, extraCols, exportBuffer, new Locale("en"),FormDataExportUtil.getPatientIdentifierTypesFromGlobalProperty());
+            
+            
+        } else {
+            //INFOPATH
+            // Create a map to keep track of the data 
+            Map<Encounter, Map<Concept, List<Obs>>> dataMap = new HashMap<Encounter, Map<Concept, List<Obs>>>();
+            
+            // Keeps track of the maximum number of columns to create for each concept
+            Map<Concept, Integer> fieldMap = new HashMap<Concept, Integer>();
+                
+            // Create the dataset maps
+            populateMaps(dataMap, fieldMap, encounters);
+    
+            // Write the column headers to the export buffer
+            writeColumnHeaders(form, fieldMap, exportBuffer, extraCols);       
+    
+            // Write the column data to the export buffer
+            writeColumnData(form, dataMap, fieldMap, exportBuffer, extraCols);
+        }
+	    File exportFile = null;
+	    exportFile = createExportFile(form.getName());
+	    try {
+    	    Writer exportOutput = new BufferedWriter( new FileWriter(exportFile) );
+            exportOutput.write( exportBuffer.toString() );          
+            // Close output 
+            exportOutput.close();
+	    } catch (Exception ex){
+	        log.error("Could not export file");
+	    }
+	    return exportFile;
 	}
 	
+//	/**
+//	 * 
+//	 * @param form
+//	 * @param cohortKey
+//	 * @param extras
+//	 * @return
+//	 */
+//	public File exportEncounterData(Form form, String cohortKey, String [] extras) { 
+//		
+//		Cohort cohort = new Cohort();
+//		
+//		/*
+//		if (!cohortKey.isEmpty()) {     			
+//			log.info("Using cohort " + cohortKey);
+//			CohortDefinition cohortDefinition = Context.getCohortService().getCohortDefinition(cohortKey);
+//			cohort = Context.getCohortService().evaluate(cohortDefinition, null);
+//		} 
+//		*/
+//		//else {
+//		
+//		// Fixed NPE 
+//		List<EncounterType> encounterTypes = new ArrayList<EncounterType>();					
+//		encounterTypes.add(form.getEncounterType());
+//		log.info("Using patients with encounters");
+//		cohort = Context.getPatientSetService().
+//			getPatientsHavingEncounters(encounterTypes, null, form, null, null, null, null);	    			
+//		//} 
+//
+//		log.info("COHORT = " + cohort);
+//		
+//		// If cohort is still null, use the cohort of all patients in the system
+////		if (cohort == null || cohort.isEmpty()) { 
+////			CohortDefinition allPatientCohort = Context.getCohortService().getAllPatientsCohortDefinition();				
+////			cohort = Context.getCohortService().evaluate(allPatientCohort, null);			
+////		}					
+//		
+//		
+//		return exportEncounterData(form, cohort, extras);
+//	}
 	
-	/**
-	 * 
-	 * @param form
-	 * @param cohortKey
-	 * @param extras
-	 * @return
-	 */
-	public File exportEncounterData(Form form, String cohortKey, String [] extras) { 
-		
-		Cohort cohort = new Cohort();
-		
-		/*
-		if (!cohortKey.isEmpty()) {     			
-			log.info("Using cohort " + cohortKey);
-			CohortDefinition cohortDefinition = Context.getCohortService().getCohortDefinition(cohortKey);
-			cohort = Context.getCohortService().evaluate(cohortDefinition, null);
-		} 
-		*/
-		//else {
-		
-		// Fixed NPE 
-		List<EncounterType> encounterTypes = new ArrayList<EncounterType>();					
-		encounterTypes.add(form.getEncounterType());
-		log.info("Using patients with encounters");
-		cohort = Context.getPatientSetService().
-			getPatientsHavingEncounters(encounterTypes, null, form, null, null, null, null);	    			
-		//} 
-
-		log.info("COHORT = " + cohort);
-		
-		// If cohort is still null, use the cohort of all patients in the system
-		if (cohort == null || cohort.isEmpty()) { 
-			CohortDefinition allPatientCohort = Context.getCohortService().getAllPatientsCohortDefinition();				
-			cohort = Context.getCohortService().evaluate(allPatientCohort, null);			
-		}					
-		
-		
-		return exportEncounterData(form, cohort, extras);
-	}
 	
-	
-	/**
-	 * Export form encounter data for the given form and patients.
-	 *  
-	 * @param 	form		the form to be exported	
-	 * @param	patients	the patients to include in the export (included only to filter out encounters)
-	 * @param 	extras		the extra columns to include in the export (for each form field)
-	 * @return	the export data file
-	 */
-	public File exportEncounterData(Form form, Cohort cohort, String [] extras) { 
-
-		File exportFile = null;
-		
-		if (form == null) { 
-			throw new APIException("Form does not exist");
-		}
-		
-		try { 
-
-			// Export buffer to hold all columns/data to be exported
-			StringBuffer exportBuffer = new StringBuffer();
-			
-			// Add the given form to list
-			List<Form> forms = new ArrayList<Form>();			
-			forms.add(form);
-						
-			// Get all encounters for the given form, filter by the given patients (null = use all)
-			List<Encounter> encounters = 
-				dao.getEncountersByForm(cohort, forms);
-			
-			// Create a map to keep track of the data 
-			Map<Encounter, Map<Concept, List<Obs>>> dataMap = new HashMap<Encounter, Map<Concept, List<Obs>>>();
-			
-			// Keeps track of the maximum number of columns to create for each concept
-			Map<Concept, Integer> fieldMap = new HashMap<Concept, Integer>();
-				
-			// Create the dataset maps
-			populateMaps(dataMap, fieldMap, encounters);
-
-			// Write the column headers to the export buffer
-			writeColumnHeaders(form, fieldMap, exportBuffer);		
-
-			// Write the column data to the export buffer
-			writeColumnData(form, dataMap, fieldMap, exportBuffer);
-
-			// Create the file to be used to export the data
-	    	exportFile = createExportFile(form.getName());		
-	    	
-	    	// Write out the export buffer to the export file
-		    Writer exportOutput = new BufferedWriter( new FileWriter(exportFile) );
-		    exportOutput.write( exportBuffer.toString() );			
-
-	    	// Close output 
-	    	exportOutput.close();
-	    	
-		} catch (Exception e) { 
-			log.error("An error occured while export form data ", e);
-		}
-		return exportFile;
-
-	}
+//	/**
+//	 * Export form encounter data for the given form and patients.
+//	 *  
+//	 * @param 	form		the form to be exported	
+//	 * @param	patients	the patients to include in the export (included only to filter out encounters)
+//	 * @param 	extras		the extra columns to include in the export (for each form field)
+//	 * @return	the export data file
+//	 */
+//	public File exportEncounterData(Form form, Cohort cohort, String [] extras) { 
+//
+//		File exportFile = null;
+//		
+//		if (form == null) { 
+//			throw new APIException("Form does not exist");
+//		}
+//		
+//		try { 
+//
+//			// Export buffer to hold all columns/data to be exported
+//			StringBuffer exportBuffer = new StringBuffer();
+//			
+//			// Add the given form to list
+//			List<Form> forms = new ArrayList<Form>();			
+//			forms.add(form);
+//						
+//			// Get all encounters for the given form, filter by the given patients (null = use all)
+//			List<Encounter> encounters = dao.getEncountersByForm(cohort, forms);
+//			
+//			
+//			if (HtmlFormEntryUtil.getService().getHtmlFormByForm(form)!= null){
+//			    //HTMLFORM
+//			    
+//			    
+//			} else {
+//			    // INFOPATH
+//                // Create a map to keep track of the data 
+//                Map<Encounter, Map<Concept, List<Obs>>> dataMap = new HashMap<Encounter, Map<Concept, List<Obs>>>();
+//                
+//                // Keeps track of the maximum number of columns to create for each concept
+//                Map<Concept, Integer> fieldMap = new HashMap<Concept, Integer>();
+//                
+//                // Create the dataset maps
+//                populateMaps(dataMap, fieldMap, encounters);
+//    
+//                // Write the column headers to the export buffer
+//                writeColumnHeaders(form, fieldMap, exportBuffer, null);     
+//    
+//                // Write the column data to the export buffer
+//                writeColumnData(form, dataMap, fieldMap, exportBuffer, null);
+//			    
+//			}
+//			// Create the file to be used to export the data
+//	    	exportFile = createExportFile(form.getName());		
+//	    	
+//	    	// Write out the export buffer to the export file
+//		    Writer exportOutput = new BufferedWriter( new FileWriter(exportFile) );
+//		    exportOutput.write( exportBuffer.toString() );			
+//
+//	    	// Close output 
+//	    	exportOutput.close();
+//	    	
+//		} catch (Exception e) { 
+//			log.error("An error occured while export form data ", e);
+//		}
+//		return exportFile;
+//
+//	}
 	
 	
 	/**
@@ -314,87 +430,71 @@ public class FormDataExportServiceImpl implements FormDataExportService {
 	 * @param form
 	 * @param exportBuffer
 	 */
-	public void writeColumnHeaders(Form form, Map<Concept, Integer> fieldMap, StringBuffer exportBuffer) { 
+	public void writeColumnHeaders(Form form, Map<Concept, Integer> fieldMap, StringBuffer exportBuffer, List<String> extraCols) { 
 		
 		// Write out static columns
 		exportBuffer.
 			append(DEFAULT_QUOTE).append("ENCOUNTER ID").append(DEFAULT_QUOTE).append(DEFAULT_COLUMN_SEPARATOR).
 			append(DEFAULT_QUOTE).append("ENCOUNTER DATE").append(DEFAULT_QUOTE).append(DEFAULT_COLUMN_SEPARATOR).
-			append(DEFAULT_QUOTE).append("PATIENT ID").append(DEFAULT_QUOTE).append(DEFAULT_COLUMN_SEPARATOR).
-			append(DEFAULT_QUOTE).append("IMB ID").append(DEFAULT_QUOTE).append(DEFAULT_COLUMN_SEPARATOR);
-
-		
-		TreeMap<Integer, TreeSet<FormField>> formStructure = 
-			FormUtil.getFormStructure(form);
-		
-		StringBuffer fieldNumber = new StringBuffer();
-		
-		// Iterate over high level nodes
-		for(Integer id : formStructure.keySet()) { 
-
-			FormField parent = Context.getFormService().getFormField(id);
-			
-			fieldNumber.setLength(0);
-			
-			if (parent != null) { 
-				log.info("Parent form field: " + parent.getFormFieldId() + " " + parent.getFieldNumber() );
-			} 
-			else {
-				log.info("Parent id: " + id);
+			append(DEFAULT_QUOTE).append("ENCOUNTER LOCATION").append(DEFAULT_QUOTE).append(DEFAULT_COLUMN_SEPARATOR).
+			append(DEFAULT_QUOTE).append("ENCOUNTER PROVIDER").append(DEFAULT_QUOTE).append(DEFAULT_COLUMN_SEPARATOR).
+			append(DEFAULT_QUOTE).append("INTERNAL PATIENT ID").append(DEFAULT_QUOTE).append(DEFAULT_COLUMN_SEPARATOR);
+			for (PatientIdentifierType pit : FormDataExportUtil.getPatientIdentifierTypesFromGlobalProperty()){
+			    exportBuffer.append(DEFAULT_QUOTE).append(pit.getName()).append(DEFAULT_QUOTE).append(DEFAULT_COLUMN_SEPARATOR);
 			}
-			
+		    
 
-			
-			
-			// Iterate over the actual questions
-			TreeSet<FormField> formFields = formStructure.get(id);
-				
-			if (formFields != null && !formFields.isEmpty()) { 
-			
-				for(FormField formField : formFields) { 				
-					
-					Field field = formField.getField();
-					
-					// Only process concept form fields
-					if (CONCEPT_FIELD_TYPE.equals(field.getFieldType().getName())) { 
-												
-						// Create a column name based on the concept
-						Concept concept = field.getConcept();
-						
-						// Check if concept exists (it should)
-						if (concept != null) { 
-							
-							
-							
-							int numberOfOccurrences = 
-								(fieldMap.get(concept)!=null)?fieldMap.get(concept):1;		
-								
-							for (int occurrence=1; occurrence<=numberOfOccurrences; occurrence++) {							
-								
-								
-								// If concept is a concept set, we'll ignore it because we'll see it later
-								if ( concept.getConceptSets()!= null && !concept.getConceptSets().isEmpty()) { 
+		
+		    //IF INFOPATH
+		    
+    		TreeMap<Integer, TreeSet<FormField>> formStructure = FormUtil.getFormStructure(form);
+    		StringBuffer fieldNumber = new StringBuffer();
+    		// Iterate over high level nodes
+    		for(Integer id : formStructure.keySet()) { 
+    			FormField parent = Context.getFormService().getFormField(id);
+    			fieldNumber.setLength(0);
+    			if (parent != null) { 
+    				log.info("Parent form field: " + parent.getFormFieldId() + " " + parent.getFieldNumber() );
+    			} else {
+    				log.info("Parent id: " + id);
+    			}
+    			// Iterate over the actual questions
+    			TreeSet<FormField> formFields = formStructure.get(id);	
+    			if (formFields != null && !formFields.isEmpty()) { 
+    				for(FormField formField : formFields) { 				
+    					Field field = formField.getField();
+    					// Only process concept form fields
+    					if (CONCEPT_FIELD_TYPE.equals(field.getFieldType().getName())) { 
+    						// Create a column name based on the concept
+    						Concept concept = field.getConcept();
+    						// Check if concept exists (it should)
+    						if (concept != null) { 
+    							int numberOfOccurrences = 
+    								(fieldMap.get(concept)!=null)?fieldMap.get(concept):1;		
+    							for (int occurrence=1; occurrence<=numberOfOccurrences; occurrence++) {							
+    								// If concept is a concept set, we'll ignore it because we'll see it later
+    								if ( concept.getConceptSets()!= null && !concept.getConceptSets().isEmpty()) { 
+    									/*
+    									for (ConceptSet cs : formField.getField().getConcept().getConceptSets()) { 									
+    										log.info("\t - Concept Set Field: " + field.getFieldId() + " - " + 
+    														cs.getConcept().getConceptId() + " " + field.getName());
+    										addColumnHeader(exportBuffer, fieldNumber.toString(), cs.getConcept(), i, false);		
+    									}
+    									*/	
+    								} else { 
+    									// Otherwise, just create a new column for the concept
+    									String fieldName = createColumnHeader(formField, occurrence);
+    									log.debug("\tConcept Field: " + fieldName);
+    									addColumnHeader(exportBuffer, fieldName, false, extraCols);
+    							
+    								}
+    							}						
+    						}
+    					}
+    				}
+    			}
+    		}
 
-									/*
-									for (ConceptSet cs : formField.getField().getConcept().getConceptSets()) { 									
-										log.info("\t - Concept Set Field: " + field.getFieldId() + " - " + 
-														cs.getConcept().getConceptId() + " " + field.getName());
-										addColumnHeader(exportBuffer, fieldNumber.toString(), cs.getConcept(), i, false);		
-									}
-									*/	
-								} 
-								else { 
-									// Otherwise, just create a new column for the concept
-									String fieldName = createColumnHeader(formField, occurrence);
-									log.info("\tConcept Field: " + fieldName);
-									addColumnHeader(exportBuffer, fieldName, false);
-								}
-							}						
-						}
-					}
-				}
-			}
-		}
 		exportBuffer.append("\n");
 		log.info("Column Buffer: " + exportBuffer.toString());		
 	}
@@ -402,7 +502,7 @@ public class FormDataExportServiceImpl implements FormDataExportService {
 	
 	
 	/**
-	 * Creates a column header for the given form field, as well as the number of times it appears in the form.
+	 * Creates a column header string for the given form field, as well as the number of times it appears in the form.
 	 * @param formField
 	 * @param occurrence
 	 * @return
@@ -426,13 +526,8 @@ public class FormDataExportServiceImpl implements FormDataExportService {
 		Concept concept = formField.getField().getConcept();
 		
 		// By default set field name, but try to use concept short name
-		String fieldName = "";		
-		if (concept.getName().getShortName()!=null&&!EMPTY.equals(concept.getName().getShortName())) {
-			fieldName = concept.getName().getShortName();
-		} 
-		else { 
-			fieldName = concept.getName().getName();
-		}		
+		String fieldName = concept.getBestName(Context.getLocale()).getName();
+	
 		
 		// Replace unwanted characters and change case to upper  
 		fieldName = fieldName.replaceAll("\\s", "_");		
@@ -460,7 +555,7 @@ public class FormDataExportServiceImpl implements FormDataExportService {
 	
 	
 	/**
-	 * Gets the field number of the given form field.
+	 * Gets the field number of the given form field as a string.
 	 * 
 	 * @param formField
 	 * @return
@@ -489,7 +584,7 @@ public class FormDataExportServiceImpl implements FormDataExportService {
 	 * @param concept
 	 * @param isLast
 	 */
-	public void addColumnHeader(StringBuffer exportBuffer, String columnHeader, boolean isLast) { 
+	public void addColumnHeader(StringBuffer exportBuffer, String columnHeader, boolean isLast, List<String> extraCols) { 
 				
 		// Add quotes around the column header
 		exportBuffer.append(DEFAULT_QUOTE);		
@@ -501,6 +596,30 @@ public class FormDataExportServiceImpl implements FormDataExportService {
 		exportBuffer.append(DEFAULT_QUOTE);		
 		exportBuffer.append(columnHeader + "_DATE");
 		exportBuffer.append(DEFAULT_QUOTE);
+		
+		if (extraCols != null){
+            for (String st : extraCols){
+                if (st.equals("valueModifier")){
+                    exportBuffer.append(DEFAULT_QUOTE);        
+                    exportBuffer.append(columnHeader + "_ValueModifier");                                   
+                    exportBuffer.append(DEFAULT_QUOTE);
+                    exportBuffer.append(DEFAULT_COLUMN_SEPARATOR);
+                } else if (st.equals("accessionNumber")){
+                    exportBuffer.append(DEFAULT_QUOTE);        
+                    exportBuffer.append(columnHeader + "_AccessionNumber");                                   
+                    exportBuffer.append(DEFAULT_QUOTE);
+                    exportBuffer.append(DEFAULT_COLUMN_SEPARATOR);
+                } else if (st.equals("comment")){
+                    exportBuffer.append(DEFAULT_QUOTE);        
+                    exportBuffer.append(columnHeader + "_Comment");                                   
+                    exportBuffer.append(DEFAULT_QUOTE);
+                    exportBuffer.append(DEFAULT_COLUMN_SEPARATOR);
+                }
+            }
+        }
+		
+		//TODO: Are obs groups handled correctly?
+		
 		
 		// Add comma if this isn't the last comma
 		if (!isLast) exportBuffer.append(DEFAULT_COLUMN_SEPARATOR);
@@ -519,20 +638,31 @@ public class FormDataExportServiceImpl implements FormDataExportService {
 			Form form, 
 			Map<Encounter, Map<Concept, List<Obs>>> dataMap,
 			Map<Concept, Integer> fieldMap, 
-			StringBuffer exportBuffer) { 
+			StringBuffer exportBuffer, List<String> extraCols) { 
 		
 		// Write out all of the rows
 		for (Encounter row : dataMap.keySet()) { 			
-			
 			// Add static column data 
 			Patient patient = row.getPatient();
-			PatientIdentifier identifier = patient.getPatientIdentifier("IMB ID");
+//			StringBuilder sb = new StringBuilder("");
+//			int count = 0;
+//			if (patient != null && patient.getActiveIdentifiers() != null){
+//    			for (PatientIdentifier pi : patient.getActiveIdentifiers()){
+//    			    if (count != 0)
+//    			        sb.append(",");    
+//    			    sb.append(pi.getIdentifierType().getName() + ":" + pi.getIdentifier());
+//    			    count++;
+//    			}
+//			}	
+			
 			exportBuffer.append(DEFAULT_QUOTE).append(row.getEncounterId()).append(DEFAULT_QUOTE).append(DEFAULT_COLUMN_SEPARATOR);			
 			exportBuffer.append(DEFAULT_QUOTE).append(DATE_FORMATTER.format(row.getEncounterDatetime())).append(DEFAULT_QUOTE).append(DEFAULT_COLUMN_SEPARATOR);
-			exportBuffer.append(DEFAULT_QUOTE).append(patient.getPatientId()).append(DEFAULT_QUOTE).append(DEFAULT_COLUMN_SEPARATOR);			
-			exportBuffer.append(DEFAULT_QUOTE).append(identifier!=null?identifier.getIdentifier():"").append(DEFAULT_QUOTE).append(DEFAULT_COLUMN_SEPARATOR);
-			
-			
+			exportBuffer.append(DEFAULT_QUOTE).append(row.getLocation().getName()).append(DEFAULT_QUOTE).append(DEFAULT_COLUMN_SEPARATOR);
+			exportBuffer.append(DEFAULT_QUOTE).append(row.getProvider().getGivenName()+ " " + row.getProvider().getFamilyName()).append(DEFAULT_QUOTE).append(DEFAULT_COLUMN_SEPARATOR);
+			exportBuffer.append(DEFAULT_QUOTE).append((patient != null ? patient.getPatientId() : "")).append(DEFAULT_QUOTE).append(DEFAULT_COLUMN_SEPARATOR);	
+			for (PatientIdentifierType pit : FormDataExportUtil.getPatientIdentifierTypesFromGlobalProperty()){
+			    exportBuffer.append(DEFAULT_QUOTE).append(patient.getPatientIdentifier(pit)).append(DEFAULT_QUOTE).append(DEFAULT_COLUMN_SEPARATOR);
+			}
 			Map<Concept, List<Obs>> columnData = dataMap.get(row);			
 					
 			TreeMap<Integer, TreeSet<FormField>> formStructure = 
@@ -604,18 +734,38 @@ public class FormDataExportServiceImpl implements FormDataExportService {
 									
 									// Write out the observation value  
 									exportBuffer.append(DEFAULT_QUOTE);
-									exportBuffer.append((obs != null)?obs.getValueAsString(Locale.US):"");
+									exportBuffer.append((obs != null) ? obs.getValueAsString(Context.getLocale()):"");
 									exportBuffer.append(DEFAULT_QUOTE);		
-									
 									exportBuffer.append(DEFAULT_COLUMN_SEPARATOR);
 									
 									// Write out observation date
 									exportBuffer.append(DEFAULT_QUOTE);		
-									exportBuffer.append((obs!=null)?OpenmrsUtil.getDateFormat().format(obs.getObsDatetime()):"");									
+									exportBuffer.append((obs!=null)?Context.getDateFormat().format(obs.getObsDatetime()):"");									
 									exportBuffer.append(DEFAULT_QUOTE);
-
 									exportBuffer.append(DEFAULT_COLUMN_SEPARATOR);
-								
+									
+									//TODO:  write out extra Obs properties:
+									//value_modifier, accession_number, comment
+									if (extraCols != null){
+									    for (String st : extraCols){
+									        if (st.equals("valueModifier")){
+									            exportBuffer.append(DEFAULT_QUOTE);        
+			                                    exportBuffer.append((obs!=null)?obs.getValueModifier():"");                                   
+			                                    exportBuffer.append(DEFAULT_QUOTE);
+			                                    exportBuffer.append(DEFAULT_COLUMN_SEPARATOR);
+									        } else if (st.equals("accessionNumber")){
+									            exportBuffer.append(DEFAULT_QUOTE);        
+			                                    exportBuffer.append((obs!=null)?obs.getAccessionNumber():"");                                   
+			                                    exportBuffer.append(DEFAULT_QUOTE);
+			                                    exportBuffer.append(DEFAULT_COLUMN_SEPARATOR);
+									        } else if (st.equals("comment")){
+									            exportBuffer.append(DEFAULT_QUOTE);        
+			                                    exportBuffer.append((obs!=null)?obs.getComment():"");                                   
+			                                    exportBuffer.append(DEFAULT_QUOTE);
+			                                    exportBuffer.append(DEFAULT_COLUMN_SEPARATOR);
+									        }
+									    }
+									}
 								}															
 							}
 						}

@@ -3,18 +3,19 @@ package org.openmrs.module.formdataexport.impl;
 import java.io.BufferedReader;
 import java.io.DataOutputStream;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
+import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.List;
+import java.util.StringTokenizer;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.springframework.util.FileCopyUtils;
+import org.openmrs.PatientIdentifierType;
+import org.openmrs.api.context.Context;
 
 public class FormDataExportUtil {
 	/* Logger */
@@ -134,7 +135,21 @@ public class FormDataExportUtil {
 		return yearsBetween;
 	}
 	
-	
-	
+	public static List<PatientIdentifierType> getPatientIdentifierTypesFromGlobalProperty(){
+	    List<PatientIdentifierType> ret = new ArrayList<PatientIdentifierType>();
+	    String gp = Context.getAdministrationService().getGlobalProperty("formdataexport.patientIdentifierTypes");
+	    if (gp == null || gp.equals(""))
+	        throw new RuntimeException("You must set a value for the global property formdataexport.patientIdentifierTypes");
+	    for (StringTokenizer st = new StringTokenizer(gp, ","); st.hasMoreTokens(); ) {
+            String s = st.nextToken().trim();
+            PatientIdentifierType pit = Context.getPatientService().getPatientIdentifierTypeByName(s);
+            if (pit == null)
+                throw new RuntimeException("The patient identifier type " + s + " can't be found in this system's patient identifier types.");
+            else
+                ret.add(pit);
+	    }
+	    
+	    return ret;
+	}
 	
 }

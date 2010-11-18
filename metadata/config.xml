@@ -6,9 +6,9 @@
 	<!-- Base Module Properties -->
 	<id>formdataexport</id>
 	<name>Form Data Export Module</name>
-	<version>0.8.1</version>
+	<version>0.91</version>
 	<package>org.openmrs.module.@MODULE_ID@</package>
-	<author>Justin Miranda</author>
+	<author>PIH</author>
 	<description>
 			OpenMRS Form Data Export Module
 	</description>
@@ -18,7 +18,10 @@
 	<!-- /Base Module Properties -->
 	
 	<require_version>1.4.0.00</require_version>
-	
+	<require_modules>
+		<require_module>org.openmrs.module.reporting</require_module>
+		<require_module>org.openmrs.module.htmlformentry</require_module>
+	</require_modules>
 	<!-- Extensions -->
 	<extension>
 		<point>org.openmrs.admin.list</point>
@@ -52,26 +55,25 @@
 
 
 	<!-- Required Global Properties -->
+	<globalProperty>
+		<property>formdataexport.patientIdentifierTypes</property>
+		<defaultValue></defaultValue>
+		<description>
+			A comma-separated list of patient identifier types by identifier name that you want to include in your data exports.
+		</description>
+	</globalProperty>
 	
 	<!-- /Required Global Properties -->
 	
-	<!--
 	<dwr>
 		<allow>
-			<create creator="new" javascript="DWRFormEntryService">
-				<param name="class" value="@MODULE_PACKAGE@.web.DWRFormEntryService"/>
-				<include method="enterForm"/>
+			<create creator="new" javascript="FormDataExprtDWRUtil">
+				<param name="class" value="org.openmrs.module.formdataexport.web.dynamic.FormDataExprtDWRUtil"/>
+				<include method="getFormSections"/>
 			</create>
+			<convert converter="bean" match="org.openmrs.module.formdataexport.web.dynamic.HtmlFormSectionItem"/>
 		</allow>
-
-		<signatures>
-			<![CDATA[
-			import @MODULE_PACKAGE@.web.DWRFormEntryService;
-			DWRFormEntryService.enterForm(Integer patientId, Integer formId, boolean useEncounter, List<String> fields);
-			]]>
-		</signatures>	
 	</dwr>
-	-->
 	
 	<!-- Servlets -->
 	<!-- Accessed through the url /pageContext()/moduleServlet/<moduleId>/<servlet-name> -->

@@ -1,6 +1,8 @@
 package org.openmrs.module.formdataexport;
 
 import java.io.File;
+import java.util.Date;
+import java.util.List;
 import java.util.Map;
 
 import org.openmrs.Cohort;
@@ -17,15 +19,15 @@ import org.springframework.transaction.annotation.Transactional;
 public interface FormDataExportService {
 
 	
-	/**
-	 * Exports the encounter data with columns from the given form and rows constrained by the given cohort.
-	 * 
-	 * @param	form	represents the columns (form fields) to be exported
-	 * @parma	cohort	represents the rows (patients) to be exported
-	 * @param	extras	the extra columns to include for each column
-	 */
-	@Transactional(readOnly=true)
-	public File exportEncounterData(Form form, Cohort cohort, String [] extras);
+//	/**
+//	 * Exports the encounter data with columns from the given form and rows constrained by the given cohort.
+//	 * 
+//	 * @param	form	represents the columns (form fields) to be exported
+//	 * @parma	cohort	represents the rows (patients) to be exported
+//	 * @param	extras	the extra columns to include for each column
+//	 */
+//	@Transactional(readOnly=true)
+//	public File exportEncounterData(Form form, Cohort cohort, String [] extras);
 	
 		
 	/**
@@ -36,7 +38,19 @@ public interface FormDataExportService {
 	 * @return
 	 */
 	@Transactional(readOnly=true)
-	public File exportEncounterData(Form form, String cohortKey, String [] extras);
+	public File exportEncounterData(Form form, Integer sectionIndex, Date startDate, Date endDate, String cohortQueryUUID, List<String> extraCols, String firstLast, Integer quantity);
+	
+	
+	
+//	/**
+//     * 
+//     * @param form
+//     * @param cohortKey
+//     * @param extras
+//     * @return
+//     */
+//    @Transactional(readOnly=true)
+//    public File exportEncounterData(Form form, String cohortKey, String [] extras);
 	
 	
 	/**
