@@ -15,7 +15,6 @@
 	<classpathentry kind="lib" path="/openmrs-trunk/lib/jakarta-log4j/log4j-1.2.15.jar"/>
 	<classpathentry kind="lib" path="/openmrs-trunk/lib/hl7api/hapi-0.5.jar" sourcepath="/openmrs-source/hapi-0.5_source_v25.zip"/>
 	<classpathentry kind="lib" path="/openmrs-trunk/lib/antlr/antlr_2.7.6.jar"/>
-	<classpathentry kind="lib" path="lib-common/htmlformentry.jar"/>
 	<classpathentry kind="lib" path="lib-common/htmlwidgets-1.5.5.jar"/>
 	<classpathentry kind="lib" path="lib-common/openmrs-api-1.6.2.12911-dev.jar"/>
 	<classpathentry kind="lib" path="lib-common/reporting-0.4.1.9.jar"/>
