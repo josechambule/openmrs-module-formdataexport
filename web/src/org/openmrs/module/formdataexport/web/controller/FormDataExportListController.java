@@ -107,14 +107,14 @@ public class FormDataExportListController extends SimpleFormController {
 		}
 		try { 
 			
-			System.out.println("form " + form.getName());
-			System.out.println("sectionIndex " + sectionIndex);
-			System.out.println("startDateStr " + startDateStr);
-			System.out.println("endDateStr " + endDateStr);
-			System.out.println("cohortQueryUUID " + cohortQueryUUID);
-			System.out.println("extraCols " + extraCols);
-			System.out.println("firstLast " + firstLast);
-			System.out.println("quantity " + quantity);
+//			System.out.println("form " + form.getName());
+//			System.out.println("sectionIndex " + sectionIndex);
+//			System.out.println("startDateStr " + startDateStr);
+//			System.out.println("endDateStr " + endDateStr);
+//			System.out.println("cohortQueryUUID " + cohortQueryUUID);
+//			System.out.println("extraCols " + extraCols);
+//			System.out.println("firstLast " + firstLast);
+//			System.out.println("quantity " + quantity);
 			
 			if ( form != null ) { 
 				// Export data

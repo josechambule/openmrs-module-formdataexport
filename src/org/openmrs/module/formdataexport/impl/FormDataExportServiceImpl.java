@@ -161,7 +161,7 @@ public class FormDataExportServiceImpl implements FormDataExportService {
             quantity = 1;
 	    
         List<Encounter> encounters = dao.getEncountersByForm(cohort, Collections.singletonList(form), startDate, endDate, firstLast);
-        // Filter by quantity if given
+        // Filter by quantity if given:
         if (quantity != null){
            Map<Patient, List<Encounter>> map = new LinkedHashMap<Patient, List<Encounter>>(); 
            for (Encounter enc:encounters){
@@ -171,7 +171,7 @@ public class FormDataExportServiceImpl implements FormDataExportService {
                    map.put(enc.getPatient(), eList);
                } else {
                    List<Encounter> eList = map.get(enc.getPatient());
-                   if (eList.size() <= quantity){
+                   if (eList.size() < quantity){
                        eList.add(enc);
                        map.put(enc.getPatient(), eList);
                    }
