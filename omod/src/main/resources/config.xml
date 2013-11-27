@@ -62,7 +62,27 @@
 			A comma-separated list of patient identifier types by identifier name that you want to include in your data exports.
 		</description>
 	</globalProperty>
-	
+	<globalProperty>
+		<property>formdataexport.personAttributeTypes</property>
+		<defaultValue></defaultValue>
+		<description>
+			A comma-separated list of person attribute types by name and the titles that you want to use for the columns. Each element of the list should be of the form "title=personAttributeType", where title is the title and personAttributeType is the name of the person attribute type. You may also include the following four special attribute types: age, gender, givenName and familyName. 
+		</description>
+	</globalProperty>	
+	<globalProperty>
+		<property>formdataexport.personAddressColumns</property>
+		<defaultValue></defaultValue>
+		<description>
+			A comma-separated list of person address columns by name and the titles that you want to use for the columns. Each element of the list should be of the form "title=addressColumn", where title is the title and addressColumn is one of: address1, address2, address3, address4, address5, address6, cityVillage, countyDistrict, stateProvince, country, postalCode, latitude or longitude.
+		</description>
+	</globalProperty>
+	<globalProperty>
+		<property>formdataexport.skipColumnsWithSuffix</property>
+		<defaultValue></defaultValue>
+		<description>
+			A comma-separated list of column suffixes to skip. If there are any exceptions, add a pipe symbol and then list the exceptions. For example "_DATE,_PARENT" and "_DATE,_PARENT|TRANSFER_IN_DATE" are both valid.
+		</description>
+	</globalProperty>
 	<!-- /Required Global Properties -->
 	
 	<dwr>
@@ -89,12 +109,8 @@
 		<file>messages.properties</file>
 	</messages>
 	<messages>
-		<lang>fr</lang>
-		<file>messages_fr.properties</file>
-	</messages>
-	<messages>
-		<lang>es</lang>
-		<file>messages_es.properties</file>
+		<lang>pt</lang>
+		<file>messages_pt.properties</file>
 	</messages>
 	<!-- /Internationalization -->
 	
