@@ -44,6 +44,17 @@ import org.openmrs.module.reporting.evaluation.EvaluationException;
 import org.openmrs.util.FormUtil;
 import org.openmrs.util.OpenmrsUtil;
 
+// SIBI
+import au.com.bytecode.opencsv.CSVReader;
+import java.io.FileOutputStream;
+import java.io.StringReader;
+import org.apache.poi.xssf.usermodel.XSSFCell;
+import org.apache.poi.xssf.usermodel.XSSFRow;
+import org.apache.poi.xssf.usermodel.XSSFSheet;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+
+
+
 /**
  * Form-based export service.
  * 
@@ -232,11 +243,44 @@ public class FormDataExportServiceImpl implements FormDataExportService {
         }
 	    File exportFile = null;
 	    exportFile = createExportFile(form.getName());
+	    
+	    CSVReader reader = new CSVReader(new StringReader(exportBuffer.toString())); 
+    	
+    	String[] csvLineString;
+    	String sheetName = form.getName();
+    	
+    	XSSFWorkbook wb = new XSSFWorkbook();
+    	XSSFSheet sheet = wb.createSheet(sheetName);
+    	
+    	int lineNumber = 0;
+    	
 	    try {
-    	    Writer exportOutput = new BufferedWriter( new FileWriter(exportFile) );
-            exportOutput.write( exportBuffer.toString() );          
+	    	while ((csvLineString = reader.readNext()) != null){
+	    		XSSFRow row = sheet.createRow(lineNumber);
+	    		
+	    		if(lineNumber == 0) {
+	    			// do stuff
+	    		} else {
+	    			// do stuff
+	    		}
+	    		
+	    		for(int i = 0; i < csvLineString.length; i++) {
+	    			XSSFCell cell = row.createCell(i);
+	    			cell.setCellValue(csvLineString[i]);
+	    		}
+	    			
+	    		lineNumber += 1;
+	    	}
+	    	
+	    	FileOutputStream exportOutput = new FileOutputStream(exportFile);
+	    	wb.write(exportOutput);
+	    	exportOutput.flush();
+	    	exportOutput.close();
+	    	
+	    	//Writer exportOutput = new BufferedWriter( new FileWriter(exportFile) );
+            //exportOutput.write( exportBuffer.toString() );          
             // Close output 
-            exportOutput.close();
+            //exportOutput.close();
 	    } catch (Exception ex){
 	        log.error("Could not export file");
 	    }
