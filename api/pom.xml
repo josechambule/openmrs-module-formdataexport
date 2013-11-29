@@ -16,7 +16,7 @@
 		<dependency>
 			<groupId>org.apache.poi</groupId>
 			<artifactId>poi</artifactId>
-			<version>${apachePOIVersion}</version>
+			<version>3.9</version>
 		</dependency>
 		<!-- Begin external library Dependencies -->
 
@@ -73,11 +73,6 @@
 			<groupId>net.sf.opencsv</groupId>
 			<artifactId>opencsv</artifactId>
 			<version>2.3</version>		    
-		</dependency>
-		<dependency>
-			<groupId>org.apache.poi</groupId>
-			<artifactId>poi</artifactId>
-			<version>3.9</version>		    
 		</dependency>
 		<dependency>
 			<groupId>org.apache.poi</groupId>

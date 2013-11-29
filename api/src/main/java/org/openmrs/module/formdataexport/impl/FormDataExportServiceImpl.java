@@ -52,6 +52,7 @@ import org.apache.poi.xssf.usermodel.XSSFCell;
 import org.apache.poi.xssf.usermodel.XSSFRow;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.apache.poi.ss.formula.udf.UDFFinder;
 
 
 
@@ -69,7 +70,7 @@ public class FormDataExportServiceImpl implements FormDataExportService {
 	
 	private static String FORM_DATA_EXPORT_PREFIX = "FORM_DATA_EXPORT"; 
 
-	private static String FORM_DATA_EXPORT_EXTENSION = ".csv"; 
+	private static String FORM_DATA_EXPORT_EXTENSION = ".xlsx"; 
 
 	private static DateFormat DATE_FORMATTER = new SimpleDateFormat("dd-MMM-yyyy");
 	
@@ -118,8 +119,11 @@ public class FormDataExportServiceImpl implements FormDataExportService {
 	public static File createExportFile(String formName) {
         File dir = new File(OpenmrsUtil.getApplicationDataDirectory(), "dataExports");
         dir.mkdirs();
-        String filename = FORM_DATA_EXPORT_PREFIX + "_" + formName.replace(" ", "_") + FORM_DATA_EXPORT_EXTENSION;
+        //String filename = FORM_DATA_EXPORT_PREFIX + "_" + formName.replace(" ", "_") + FORM_DATA_EXPORT_EXTENSION;
         //filename = (new StringBuilder()).append(filename).toString();
+        String timestamp = new SimpleDateFormat("yyyyMMdd_Hm").format(new Date());
+        String filename = FORM_DATA_EXPORT_PREFIX + UNDERSCORE + formName.replace(" ", "_");
+        filename += UNDERSCORE + timestamp + FORM_DATA_EXPORT_EXTENSION;
         File file = new File(dir, filename);
         return file;
     }
@@ -241,6 +245,7 @@ public class FormDataExportServiceImpl implements FormDataExportService {
             // Write the column data to the export buffer
             writeColumnData(form, dataMap, fieldMap, exportBuffer, extraCols);
         }
+        
 	    File exportFile = null;
 	    exportFile = createExportFile(form.getName());
 	    
@@ -276,6 +281,8 @@ public class FormDataExportServiceImpl implements FormDataExportService {
 	    	wb.write(exportOutput);
 	    	exportOutput.flush();
 	    	exportOutput.close();
+	    	
+	    	reader.close(); // closes the OpenCSV reader
 	    	
 	    	//Writer exportOutput = new BufferedWriter( new FileWriter(exportFile) );
             //exportOutput.write( exportBuffer.toString() );          
