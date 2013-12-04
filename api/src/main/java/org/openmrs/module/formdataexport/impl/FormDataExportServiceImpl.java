@@ -8,6 +8,7 @@ import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -44,6 +45,18 @@ import org.openmrs.module.reporting.evaluation.EvaluationException;
 import org.openmrs.util.FormUtil;
 import org.openmrs.util.OpenmrsUtil;
 
+// SIBI
+import au.com.bytecode.opencsv.CSVReader;
+import java.io.FileOutputStream;
+import java.io.StringReader;
+import org.apache.poi.xssf.usermodel.XSSFCell;
+import org.apache.poi.xssf.usermodel.XSSFRow;
+import org.apache.poi.xssf.usermodel.XSSFSheet;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.apache.poi.ss.formula.udf.UDFFinder;
+
+
+
 /**
  * Form-based export service.
  * 
@@ -55,14 +68,13 @@ public class FormDataExportServiceImpl implements FormDataExportService {
 	private Log log = LogFactory.getLog(this.getClass());
 
 	private FormDataExportDAO dao;
+	
+	private static String FORM_DATA_EXPORT_PREFIX = "FORM_DATA_EXPORT"; 
 
-	private static String FORM_DATA_EXPORT_PREFIX = "FORM_DATA_EXPORT";
+	private static String FORM_DATA_EXPORT_EXTENSION = ".xlsx"; 
 
-	private static String FORM_DATA_EXPORT_EXTENSION = ".csv";
-
-	private static DateFormat DATE_FORMATTER = new SimpleDateFormat(
-			"dd-MMM-yyyy");
-
+	private static DateFormat DATE_FORMATTER = new SimpleDateFormat("dd-MMM-yyyy");
+	
 	private static final String DEFAULT_QUOTE = "\"";
 
 	private static final String DEFAULT_COLUMN_SEPARATOR = ",";
@@ -80,6 +92,7 @@ public class FormDataExportServiceImpl implements FormDataExportService {
 	public FormDataExportServiceImpl() {
 	}
 
+	
 	/**
 	 * 
 	 * @return
@@ -88,6 +101,7 @@ public class FormDataExportServiceImpl implements FormDataExportService {
 		return dao;
 	}
 
+	
 	/**
 	 * 
 	 * @param dao
@@ -96,21 +110,23 @@ public class FormDataExportServiceImpl implements FormDataExportService {
 		this.dao = dao;
 	}
 
+
 	/**
 	 * Create a file used to store the exported data on the filesystem.
 	 * 
-	 * @param formName
-	 *            the name of the form
+	 * @param	formName	the name of the form 
 	 */
 	public static File createExportFile(String formName) {
-		File dir = new File(OpenmrsUtil.getApplicationDataDirectory(),
-				"dataExports");
-		dir.mkdirs();
-		String filename = FORM_DATA_EXPORT_PREFIX + "_"
-				+ formName.replace(" ", "_") + FORM_DATA_EXPORT_EXTENSION;
-		File file = new File(dir, filename);
-		return file;
-	}
+        File dir = new File(OpenmrsUtil.getApplicationDataDirectory(), "dataExports");
+        dir.mkdirs();
+        //String filename = FORM_DATA_EXPORT_PREFIX + "_" + formName.replace(" ", "_") + FORM_DATA_EXPORT_EXTENSION;
+        //filename = (new StringBuilder()).append(filename).toString();
+        String timestamp = new SimpleDateFormat("yyyyMMdd_Hm").format(new Date());
+        String filename = FORM_DATA_EXPORT_PREFIX + UNDERSCORE + formName.replace(" ", "_");
+        filename += UNDERSCORE + timestamp + FORM_DATA_EXPORT_EXTENSION;
+        File file = new File(dir, filename);
+        return file;
+    }
 
 	/**
 	 * Injects the columns configured in the global properties after the column
@@ -417,16 +433,51 @@ public class FormDataExportServiceImpl implements FormDataExportService {
 			writeColumnData(form, dataMap, fieldMap, exportBuffer, extraCols);
 		}
 		File exportFile = null;
-		exportFile = createExportFile(form.getName());
-		try {
-			Writer exportOutput = new BufferedWriter(new FileWriter(exportFile));
-			exportOutput.write(exportBuffer.toString());
-			// Close output
-			exportOutput.close();
-		} catch (Exception ex) {
-			log.error("Could not export file");
-		}
-		return exportFile;
+	    exportFile = createExportFile(form.getName());
+	    
+	    CSVReader reader = new CSVReader(new StringReader(exportBuffer.toString())); 
+    	
+    	String[] csvLineString;
+    	String sheetName = form.getName();
+    	
+    	XSSFWorkbook wb = new XSSFWorkbook();
+    	XSSFSheet sheet = wb.createSheet(sheetName);
+    	
+    	int lineNumber = 0;
+    	
+	    try {
+	    	while ((csvLineString = reader.readNext()) != null){
+	    		XSSFRow row = sheet.createRow(lineNumber);
+	    		
+	    		if(lineNumber == 0) {
+	    			// do stuff
+	    		} else {
+	    			// do stuff
+	    		}
+	    		
+	    		for(int i = 0; i < csvLineString.length; i++) {
+	    			XSSFCell cell = row.createCell(i);
+	    			cell.setCellValue(csvLineString[i]);
+	    		}
+	    			
+	    		lineNumber += 1;
+	    	}
+	    	
+	    	FileOutputStream exportOutput = new FileOutputStream(exportFile);
+	    	wb.write(exportOutput);
+	    	exportOutput.flush();
+	    	exportOutput.close();
+	    	
+	    	reader.close(); // closes the OpenCSV reader
+	    	
+	    	//Writer exportOutput = new BufferedWriter( new FileWriter(exportFile) );
+            //exportOutput.write( exportBuffer.toString() );          
+            // Close output 
+            //exportOutput.close();
+	    } catch (Exception ex){
+	        log.error("Could not export file");
+	    }
+	    return exportFile;
 	}
 
 	/**
@@ -490,6 +541,7 @@ public class FormDataExportServiceImpl implements FormDataExportService {
 						// row with ID = 1 has 3 obs values, so for each row we
 						// need to display
 						// 3 columns for this particular concept.
+						// 
 						//
 						//
 						// ID COL_1 COL_2 COL_3
@@ -510,177 +562,162 @@ public class FormDataExportServiceImpl implements FormDataExportService {
 			}
 			// Include encounters with no observations
 			dataMap.put(encounter, obsListMap);
-		}
-
+		}				
+		
 	}
-
+	
 	/**
 	 * Write out the form column headers for the export.
 	 * 
 	 * @param form
 	 * @param exportBuffer
 	 */
-	public void writeColumnHeaders(Form form, Map<Concept, Integer> fieldMap,
-			StringBuffer exportBuffer, List<String> extraCols) {
-
+	public void writeColumnHeaders(Form form, Map<Concept, Integer> fieldMap, StringBuffer exportBuffer, List<String> extraCols) { 
+		
 		// Write out static columns
-		exportBuffer.append(DEFAULT_QUOTE).append("ENCOUNTER ID")
-				.append(DEFAULT_QUOTE).append(DEFAULT_COLUMN_SEPARATOR)
-				.append(DEFAULT_QUOTE).append("ENCOUNTER DATE")
-				.append(DEFAULT_QUOTE).append(DEFAULT_COLUMN_SEPARATOR)
-				.append(DEFAULT_QUOTE).append("ENCOUNTER LOCATION")
-				.append(DEFAULT_QUOTE).append(DEFAULT_COLUMN_SEPARATOR)
-				.append(DEFAULT_QUOTE).append("ENCOUNTER PROVIDER")
-				.append(DEFAULT_QUOTE).append(DEFAULT_COLUMN_SEPARATOR)
-				.append(DEFAULT_QUOTE).append("INTERNAL PATIENT ID")
-				.append(DEFAULT_QUOTE).append(DEFAULT_COLUMN_SEPARATOR);
-		for (PatientIdentifierType pit : FormDataExportUtil
-				.getPatientIdentifierTypesFromGlobalProperty()) {
-			exportBuffer.append(DEFAULT_QUOTE).append(pit.getName())
-					.append(DEFAULT_QUOTE).append(DEFAULT_COLUMN_SEPARATOR);
-		}
-
-		// IF INFOPATH
-
-		TreeMap<Integer, TreeSet<FormField>> formStructure = FormUtil
-				.getFormStructure(form);
-		StringBuffer fieldNumber = new StringBuffer();
-		// Iterate over high level nodes
-		for (Integer id : formStructure.keySet()) {
-			FormField parent = Context.getFormService().getFormField(id);
-			fieldNumber.setLength(0);
-			if (parent != null) {
-				log.info("Parent form field: " + parent.getFormFieldId() + " "
-						+ parent.getFieldNumber());
-			} else {
-				log.info("Parent id: " + id);
+		exportBuffer.
+			append(DEFAULT_QUOTE).append("ENCOUNTER ID").append(DEFAULT_QUOTE).append(DEFAULT_COLUMN_SEPARATOR).
+			append(DEFAULT_QUOTE).append("ENCOUNTER DATE").append(DEFAULT_QUOTE).append(DEFAULT_COLUMN_SEPARATOR).
+			append(DEFAULT_QUOTE).append("ENCOUNTER LOCATION").append(DEFAULT_QUOTE).append(DEFAULT_COLUMN_SEPARATOR).
+			append(DEFAULT_QUOTE).append("ENCOUNTER PROVIDER").append(DEFAULT_QUOTE).append(DEFAULT_COLUMN_SEPARATOR).
+			append(DEFAULT_QUOTE).append("INTERNAL PATIENT ID").append(DEFAULT_QUOTE).append(DEFAULT_COLUMN_SEPARATOR);
+			for (PatientIdentifierType pit : FormDataExportUtil.getPatientIdentifierTypesFromGlobalProperty()){
+			    exportBuffer.append(DEFAULT_QUOTE).append(pit.getName()).append(DEFAULT_QUOTE).append(DEFAULT_COLUMN_SEPARATOR);
 			}
-			// Iterate over the actual questions
-			TreeSet<FormField> formFields = formStructure.get(id);
-			if (formFields != null && !formFields.isEmpty()) {
-				for (FormField formField : formFields) {
-					Field field = formField.getField();
-					// Only process concept form fields
-					if (CONCEPT_FIELD_TYPE.equals(field.getFieldType()
-							.getName())) {
-						// Create a column name based on the concept
-						Concept concept = field.getConcept();
-						// Check if concept exists (it should)
-						if (concept != null) {
-							int numberOfOccurrences = (fieldMap.get(concept) != null) ? fieldMap
-									.get(concept) : 1;
-							for (int occurrence = 1; occurrence <= numberOfOccurrences; occurrence++) {
-								// If concept is a concept set, we'll ignore it
-								// because we'll see it later
-								if (concept.getConceptSets() != null
-										&& !concept.getConceptSets().isEmpty()) {
-									/*
-									 * for (ConceptSet cs :
-									 * formField.getField().
-									 * getConcept().getConceptSets()) {
-									 * log.info("\t - Concept Set Field: " +
-									 * field.getFieldId() + " - " +
-									 * cs.getConcept().getConceptId() + " " +
-									 * field.getName());
-									 * addColumnHeader(exportBuffer,
-									 * fieldNumber.toString(), cs.getConcept(),
-									 * i, false); }
-									 */
-								} else {
-									// Otherwise, just create a new column for
-									// the concept
-									String fieldName = createColumnHeader(
-											formField, occurrence);
-									log.debug("\tConcept Field: " + fieldName);
-									addColumnHeader(exportBuffer, fieldName,
-											false, extraCols);
+		    
 
-								}
-							}
-						}
-					}
-				}
-			}
-		}
+		
+		    //IF INFOPATH
+		    
+    		TreeMap<Integer, TreeSet<FormField>> formStructure = FormUtil.getFormStructure(form);
+    		StringBuffer fieldNumber = new StringBuffer();
+    		// Iterate over high level nodes
+    		for(Integer id : formStructure.keySet()) { 
+    			FormField parent = Context.getFormService().getFormField(id);
+    			fieldNumber.setLength(0);
+    			if (parent != null) { 
+    				log.info("Parent form field: " + parent.getFormFieldId() + " " + parent.getFieldNumber() );
+    			} else {
+    				log.info("Parent id: " + id);
+    			}
+    			// Iterate over the actual questions
+    			TreeSet<FormField> formFields = formStructure.get(id);	
+    			if (formFields != null && !formFields.isEmpty()) { 
+    				for(FormField formField : formFields) { 				
+    					Field field = formField.getField();
+    					// Only process concept form fields
+    					if (CONCEPT_FIELD_TYPE.equals(field.getFieldType().getName())) { 
+    						// Create a column name based on the concept
+    						Concept concept = field.getConcept();
+    						// Check if concept exists (it should)
+    						if (concept != null) { 
+    							int numberOfOccurrences = 
+    								(fieldMap.get(concept)!=null)?fieldMap.get(concept):1;		
+    							for (int occurrence=1; occurrence<=numberOfOccurrences; occurrence++) {							
+    								// If concept is a concept set, we'll ignore it because we'll see it later
+    								if ( concept.getConceptSets()!= null && !concept.getConceptSets().isEmpty()) { 
+    									/*
+    									for (ConceptSet cs : formField.getField().getConcept().getConceptSets()) { 									
+    										log.info("\t - Concept Set Field: " + field.getFieldId() + " - " + 
+    														cs.getConcept().getConceptId() + " " + field.getName());
+    										addColumnHeader(exportBuffer, fieldNumber.toString(), cs.getConcept(), i, false);		
+    									}
+    									*/	
+    								} else { 
+    									// Otherwise, just create a new column for the concept
+    									String fieldName = createColumnHeader(formField, occurrence);
+    									log.debug("\tConcept Field: " + fieldName);
+    									addColumnHeader(exportBuffer, fieldName, false, extraCols);
+    							
+    								}
+    							}						
+    						}
+    					}
+    				}
+    			}
+    		}
 
 		exportBuffer.append("\n");
-		log.info("Column Buffer: " + exportBuffer.toString());
+		log.info("Column Buffer: " + exportBuffer.toString());		
 	}
-
+	
+	
+	
 	/**
-	 * Creates a column header string for the given form field, as well as the
-	 * number of times it appears in the form.
-	 * 
+	 * Creates a column header string for the given form field, as well as the number of times it appears in the form.
 	 * @param formField
 	 * @param occurrence
 	 * @return
 	 */
-	public String createColumnHeader(FormField formField, int occurrence) {
-
+	public String createColumnHeader(FormField formField, int occurrence) { 
+		
 		StringBuffer buffer = new StringBuffer();
 
 		// Try to get the field number from the current field
-		String fieldNumber = getFieldNumber(formField);
-
-		// If there is no field number then we try to get the field number for
-		// the parent
-		if (fieldNumber == null || EMPTY.equals(fieldNumber)) {
+		String fieldNumber = getFieldNumber(formField);		
+		
+		// If there is no field number then we try to get the field number for the parent
+		if (fieldNumber == null || EMPTY.equals(fieldNumber)) { 
 			if (formField.getParent() != null) {
 				fieldNumber = getFieldNumber(formField.getParent());
 			}
 		}
 		buffer.append(fieldNumber);
-
+		
+	
 		Concept concept = formField.getField().getConcept();
-
+		
 		// By default set field name, but try to use concept short name
 		String fieldName = concept.getBestName(Context.getLocale()).getName();
-
-		// Replace unwanted characters and change case to upper
-		fieldName = fieldName.replaceAll("\\s", "_");
-		fieldName = fieldName.replaceAll("-", "_");
+	
+		
+		// Replace unwanted characters and change case to upper  
+		fieldName = fieldName.replaceAll("\\s", "_");		
+		fieldName = fieldName.replaceAll("-", "_");		
 		fieldName = fieldName.toUpperCase();
-
-		// Now we make sure that the field fits in the
+		
+		
+		// Now we make sure that the field fits in the 
 		if (fieldName.length() > DEFAULT_CONCEPT_NAME_LENGTH) {
 			buffer.append(fieldName.substring(0, DEFAULT_CONCEPT_NAME_LENGTH));
-		} else {
-			buffer.append(fieldName);
 		}
+		else { 
+			buffer.append(fieldName);				
+		}		
 		buffer.append("_").append(concept.getConceptId());
 
-		// If the concept occurs in the form more than once, then we need to
-		// distinguish it's columns
-		if (occurrence > 1) {
-			buffer.append("_").append(occurrence);
-		}
+		// If the concept occurs in the form more than once, then we need to distinguish it's columns
+		if (occurrence > 1) { 
+			buffer.append("_").append(occurrence); 
+		}				
 
+				
 		return buffer.toString();
 	}
-
+	
+	
 	/**
 	 * Gets the field number of the given form field as a string.
 	 * 
 	 * @param formField
 	 * @return
 	 */
-	private String getFieldNumber(FormField formField) {
+	private String getFieldNumber(FormField formField) { 
 		StringBuffer buffer = new StringBuffer();
 		// Get the field number and part
-		if (formField != null) {
-			if (formField.getFieldNumber() != null
-					&& !EMPTY.equals(formField.getFieldNumber())) {
+		if (formField != null) { 
+			if (formField.getFieldNumber()!=null&&!EMPTY.equals(formField.getFieldNumber())) { 
 				buffer.append(formField.getFieldNumber());
-				if (formField.getFieldPart() != null
-						&& !EMPTY.equals(formField.getFieldPart())) {
+				if (formField.getFieldPart()!=null&&!EMPTY.equals(formField.getFieldPart())) { 
 					buffer.append(formField.getFieldPart());
 				}
 				buffer.append(UNDERSCORE);
-			}
-		}
-		return buffer.toString();
+			} 	
+		}		
+		return buffer.toString();		
 	}
-
+	
+	
 	/**
 	 * Write out a single column header to the export buffer.
 	 * 
@@ -689,253 +726,518 @@ public class FormDataExportServiceImpl implements FormDataExportService {
 	 * @param concept
 	 * @param isLast
 	 */
-	public void addColumnHeader(StringBuffer exportBuffer, String columnHeader,
-			boolean isLast, List<String> extraCols) {
-
+	public void addColumnHeader(StringBuffer exportBuffer, String columnHeader, boolean isLast, List<String> extraCols) { 
+				
 		// Add quotes around the column header
-		exportBuffer.append(DEFAULT_QUOTE);
+		exportBuffer.append(DEFAULT_QUOTE);		
 		exportBuffer.append(columnHeader);
 		exportBuffer.append(DEFAULT_QUOTE);
 
 		exportBuffer.append(DEFAULT_COLUMN_SEPARATOR);
-
-		exportBuffer.append(DEFAULT_QUOTE);
+		
+		exportBuffer.append(DEFAULT_QUOTE);		
 		exportBuffer.append(columnHeader + "_DATE");
 		exportBuffer.append(DEFAULT_QUOTE);
-
-		if (extraCols != null) {
-			for (String st : extraCols) {
-				if (st.equals("valueModifier")) {
-					exportBuffer.append(DEFAULT_QUOTE);
-					exportBuffer.append(columnHeader + "_ValueModifier");
-					exportBuffer.append(DEFAULT_QUOTE);
-					exportBuffer.append(DEFAULT_COLUMN_SEPARATOR);
-				} else if (st.equals("accessionNumber")) {
-					exportBuffer.append(DEFAULT_QUOTE);
-					exportBuffer.append(columnHeader + "_AccessionNumber");
-					exportBuffer.append(DEFAULT_QUOTE);
-					exportBuffer.append(DEFAULT_COLUMN_SEPARATOR);
-				} else if (st.equals("comment")) {
-					exportBuffer.append(DEFAULT_QUOTE);
-					exportBuffer.append(columnHeader + "_Comment");
-					exportBuffer.append(DEFAULT_QUOTE);
-					exportBuffer.append(DEFAULT_COLUMN_SEPARATOR);
-				}
-			}
-		}
-
-		// TODO: Are obs groups handled correctly?
-
+		
+		if (extraCols != null){
+            for (String st : extraCols){
+                if (st.equals("valueModifier")){
+                    exportBuffer.append(DEFAULT_QUOTE);        
+                    exportBuffer.append(columnHeader + "_ValueModifier");                                   
+                    exportBuffer.append(DEFAULT_QUOTE);
+                    exportBuffer.append(DEFAULT_COLUMN_SEPARATOR);
+                } else if (st.equals("accessionNumber")){
+                    exportBuffer.append(DEFAULT_QUOTE);        
+                    exportBuffer.append(columnHeader + "_AccessionNumber");                                   
+                    exportBuffer.append(DEFAULT_QUOTE);
+                    exportBuffer.append(DEFAULT_COLUMN_SEPARATOR);
+                } else if (st.equals("comment")){
+                    exportBuffer.append(DEFAULT_QUOTE);        
+                    exportBuffer.append(columnHeader + "_Comment");                                   
+                    exportBuffer.append(DEFAULT_QUOTE);
+                    exportBuffer.append(DEFAULT_COLUMN_SEPARATOR);
+                }
+            }
+        }
+		
+		//TODO: Are obs groups handled correctly?
+		
+		
 		// Add comma if this isn't the last comma
-		if (!isLast)
-			exportBuffer.append(DEFAULT_COLUMN_SEPARATOR);
-
-	}
+		if (!isLast) exportBuffer.append(DEFAULT_COLUMN_SEPARATOR);
+		
+	}		
 
 	/**
-	 * Write all columns of data. Columns are separated by commas, rows are
-	 * separated by newlines.
+	 * Write all columns of data.  Columns are separated by commas, rows are separated by newlines.
 	 * 
 	 * @param form
 	 * @param dataMap
 	 * @param fieldMap
 	 * @param exportBuffer
 	 */
-	public void writeColumnData(Form form,
+	public void writeColumnData(
+			Form form, 
 			Map<Encounter, Map<Concept, List<Obs>>> dataMap,
-			Map<Concept, Integer> fieldMap, StringBuffer exportBuffer,
-			List<String> extraCols) {
-
+			Map<Concept, Integer> fieldMap, 
+			StringBuffer exportBuffer, List<String> extraCols) { 
+		
 		// Write out all of the rows
-		for (Encounter row : dataMap.keySet()) {
-			// Add static column data
+		for (Encounter row : dataMap.keySet()) { 			
+			// Add static column data 
 			Patient patient = row.getPatient();
-			// StringBuilder sb = new StringBuilder("");
-			// int count = 0;
-			// if (patient != null && patient.getActiveIdentifiers() != null){
-			// for (PatientIdentifier pi : patient.getActiveIdentifiers()){
-			// if (count != 0)
-			// sb.append(",");
-			// sb.append(pi.getIdentifierType().getName() + ":" +
-			// pi.getIdentifier());
-			// count++;
-			// }
-			// }
-
-			exportBuffer.append(DEFAULT_QUOTE).append(row.getEncounterId())
-					.append(DEFAULT_QUOTE).append(DEFAULT_COLUMN_SEPARATOR);
-			exportBuffer.append(DEFAULT_QUOTE)
-					.append(DATE_FORMATTER.format(row.getEncounterDatetime()))
-					.append(DEFAULT_QUOTE).append(DEFAULT_COLUMN_SEPARATOR);
-			exportBuffer.append(DEFAULT_QUOTE)
-					.append(row.getLocation().getName()).append(DEFAULT_QUOTE)
-					.append(DEFAULT_COLUMN_SEPARATOR);
-			exportBuffer
-					.append(DEFAULT_QUOTE)
-					.append(row.getProvider().getGivenName() + " "
-							+ row.getProvider().getFamilyName())
-					.append(DEFAULT_QUOTE).append(DEFAULT_COLUMN_SEPARATOR);
-			exportBuffer.append(DEFAULT_QUOTE)
-					.append((patient != null ? patient.getPatientId() : ""))
-					.append(DEFAULT_QUOTE).append(DEFAULT_COLUMN_SEPARATOR);
-			for (PatientIdentifierType pit : FormDataExportUtil
-					.getPatientIdentifierTypesFromGlobalProperty()) {
-				exportBuffer.append(DEFAULT_QUOTE)
-						.append(patient.getPatientIdentifier(pit))
-						.append(DEFAULT_QUOTE).append(DEFAULT_COLUMN_SEPARATOR);
+//			StringBuilder sb = new StringBuilder("");
+//			int count = 0;
+//			if (patient != null && patient.getActiveIdentifiers() != null){
+//    			for (PatientIdentifier pi : patient.getActiveIdentifiers()){
+//    			    if (count != 0)
+//    			        sb.append(",");    
+//    			    sb.append(pi.getIdentifierType().getName() + ":" + pi.getIdentifier());
+//    			    count++;
+//    			}
+//			}	
+			
+			exportBuffer.append(DEFAULT_QUOTE).append(row.getEncounterId()).append(DEFAULT_QUOTE).append(DEFAULT_COLUMN_SEPARATOR);			
+			exportBuffer.append(DEFAULT_QUOTE).append(DATE_FORMATTER.format(row.getEncounterDatetime())).append(DEFAULT_QUOTE).append(DEFAULT_COLUMN_SEPARATOR);
+			exportBuffer.append(DEFAULT_QUOTE).append(row.getLocation().getName()).append(DEFAULT_QUOTE).append(DEFAULT_COLUMN_SEPARATOR);
+			exportBuffer.append(DEFAULT_QUOTE).append(row.getProvider().getGivenName()+ " " + row.getProvider().getFamilyName()).append(DEFAULT_QUOTE).append(DEFAULT_COLUMN_SEPARATOR);
+			exportBuffer.append(DEFAULT_QUOTE).append((patient != null ? patient.getPatientId() : "")).append(DEFAULT_QUOTE).append(DEFAULT_COLUMN_SEPARATOR);	
+			for (PatientIdentifierType pit : FormDataExportUtil.getPatientIdentifierTypesFromGlobalProperty()){
+			    exportBuffer.append(DEFAULT_QUOTE).append(patient.getPatientIdentifier(pit)).append(DEFAULT_QUOTE).append(DEFAULT_COLUMN_SEPARATOR);
 			}
-			Map<Concept, List<Obs>> columnData = dataMap.get(row);
-
-			TreeMap<Integer, TreeSet<FormField>> formStructure = FormUtil
-					.getFormStructure(form);
-
+			Map<Concept, List<Obs>> columnData = dataMap.get(row);			
+					
+			TreeMap<Integer, TreeSet<FormField>> formStructure = 
+				FormUtil.getFormStructure(form);
+			
 			// Iterate over high level nodes
-			for (Integer id : formStructure.keySet()) {
+			for(Integer id : formStructure.keySet()) { 
 
 				// Iterate over the actual questions
 				TreeSet<FormField> formFields = formStructure.get(id);
-
-				// Iterate through the fields in the form and add the concepts
-				// to the export
-				for (FormField formField : formFields) {
-
-					if ("Concept".equals(formField.getField().getFieldType()
-							.getName())) {
+				
+				// Iterate through the fields in the form and add the concepts to the export		
+				for (FormField formField : formFields) { 
+	
+					if ("Concept".equals(formField.getField().getFieldType().getName())) { 
 
 						Concept concept = formField.getField().getConcept();
 
-						if (concept != null) {
+						
+						if (concept != null) { 
 
-							int numberOfOccurrences = (fieldMap.get(concept) != null) ? fieldMap
-									.get(concept) : 1;
-
-							for (int i = 1; i <= numberOfOccurrences; i++) {
-
-								// If we encounter a concept set, we ignore it
-								// because we run into it later
-								if (concept.getConceptSets() != null
-										&& !concept.getConceptSets().isEmpty()) {
+							int numberOfOccurrences = (fieldMap.get(concept)!=null)?fieldMap.get(concept):1;		
+		
+							for (int i=1; i<=numberOfOccurrences; i++) { 
+							
+								
+								
+								// If we encounter a concept set, we ignore it because we run into it later
+								if (concept.getConceptSets() != null && !concept.getConceptSets().isEmpty()) { 
 									/*
-									 * // Then we iterate over concepts in
-									 * concept set and display values for
-									 * (ConceptSet cs :
-									 * formField.getField().getConcept
-									 * ().getConceptSets()) {
-									 * 
-									 * 
-									 * exportBuffer. append(DEFAULT_QUOTE);
-									 * 
-									 * // If the observation list is not empty,
-									 * we'll write the first observation we find
-									 * in the list List<Obs> obsList =
-									 * columnData.get(cs.getConcept()); if
-									 * (obsList != null && !obsList.isEmpty()) {
-									 * exportBuffer
-									 * .append(obsList.get(0).getValueAsString
-									 * (Locale.US));
-									 * 
-									 * // NOTE - we need to remove observations
-									 * from this list as we write them to the
-									 * export buffer obsList.remove(0); }
-									 * 
-									 * exportBuffer. append(DEFAULT_QUOTE).
-									 * append(DEFAULT_COLUMN_SEPARATOR); }
-									 */
-								} else {
+									// Then we iterate over concepts in concept set and display values
+									for (ConceptSet cs : formField.getField().getConcept().getConceptSets()) { 
+													
 
-									// If the observation list is not empty,
-									// display the first value
+										exportBuffer.
+											append(DEFAULT_QUOTE);
+																					
+										// If the observation list is not empty, we'll write the first observation we find in the list 
+										List<Obs> obsList = columnData.get(cs.getConcept());
+										if (obsList != null && !obsList.isEmpty()) {	
+											exportBuffer.append(obsList.get(0).getValueAsString(Locale.US));
+
+											// NOTE - we need to remove observations from this list as we write them to the export buffer
+											obsList.remove(0);										
+										} 
+										
+										exportBuffer.											
+											append(DEFAULT_QUOTE).
+											append(DEFAULT_COLUMN_SEPARATOR);
+									}*/
+								} 
+								else {
+								
+								
+	
+									// If the observation list is not empty, display the first value 
 									Obs obs = null;
-
+									
 									List<Obs> obsList = columnData.get(concept);
-									if (obsList != null && !obsList.isEmpty()) {
+									if (obsList != null && !obsList.isEmpty()) {																	
 										obs = obsList.get(0);
-										// NOTE - we need to remove observations
-										// from this list as we write
+										// NOTE - we need to remove observations from this list as we write 
 										// them to the export buffer
 										//
-										// TODO Figure out why we have to do
-										// this?
+										// TODO Figure out why we have to do this?
 										obsList.remove(0);
 									}
-
-									// Write out the observation value
+									
+									
+									// Write out the observation value  
 									exportBuffer.append(DEFAULT_QUOTE);
-									exportBuffer.append((obs != null) ? obs
-											.getValueAsString(Context
-													.getLocale()) : "");
-									exportBuffer.append(DEFAULT_QUOTE);
-									exportBuffer
-											.append(DEFAULT_COLUMN_SEPARATOR);
-
+									exportBuffer.append((obs != null) ? obs.getValueAsString(Context.getLocale()):"");
+									exportBuffer.append(DEFAULT_QUOTE);		
+									exportBuffer.append(DEFAULT_COLUMN_SEPARATOR);
+									
 									// Write out observation date
+									exportBuffer.append(DEFAULT_QUOTE);		
+									exportBuffer.append((obs!=null)?Context.getDateFormat().format(obs.getObsDatetime()):"");									
 									exportBuffer.append(DEFAULT_QUOTE);
-									exportBuffer.append((obs != null) ? Context
-											.getDateFormat().format(
-													obs.getObsDatetime()) : "");
-									exportBuffer.append(DEFAULT_QUOTE);
-									exportBuffer
-											.append(DEFAULT_COLUMN_SEPARATOR);
-
-									// TODO: write out extra Obs properties:
-									// value_modifier, accession_number, comment
-									if (extraCols != null) {
-										for (String st : extraCols) {
-											if (st.equals("valueModifier")) {
-												exportBuffer
-														.append(DEFAULT_QUOTE);
-												exportBuffer
-														.append((obs != null) ? obs
-																.getValueModifier()
-																: "");
-												exportBuffer
-														.append(DEFAULT_QUOTE);
-												exportBuffer
-														.append(DEFAULT_COLUMN_SEPARATOR);
-											} else if (st
-													.equals("accessionNumber")) {
-												exportBuffer
-														.append(DEFAULT_QUOTE);
-												exportBuffer
-														.append((obs != null) ? obs
-																.getAccessionNumber()
-																: "");
-												exportBuffer
-														.append(DEFAULT_QUOTE);
-												exportBuffer
-														.append(DEFAULT_COLUMN_SEPARATOR);
-											} else if (st.equals("comment")) {
-												exportBuffer
-														.append(DEFAULT_QUOTE);
-												exportBuffer
-														.append((obs != null) ? obs
-																.getComment()
-																: "");
-												exportBuffer
-														.append(DEFAULT_QUOTE);
-												exportBuffer
-														.append(DEFAULT_COLUMN_SEPARATOR);
-											}
-										}
+									exportBuffer.append(DEFAULT_COLUMN_SEPARATOR);
+									
+									//TODO:  write out extra Obs properties:
+									//value_modifier, accession_number, comment
+									if (extraCols != null){
+									    for (String st : extraCols){
+									        if (st.equals("valueModifier")){
+									            exportBuffer.append(DEFAULT_QUOTE);        
+			                                    exportBuffer.append((obs!=null)?obs.getValueModifier():"");                                   
+			                                    exportBuffer.append(DEFAULT_QUOTE);
+			                                    exportBuffer.append(DEFAULT_COLUMN_SEPARATOR);
+									        } else if (st.equals("accessionNumber")){
+									            exportBuffer.append(DEFAULT_QUOTE);        
+			                                    exportBuffer.append((obs!=null)?obs.getAccessionNumber():"");                                   
+			                                    exportBuffer.append(DEFAULT_QUOTE);
+			                                    exportBuffer.append(DEFAULT_COLUMN_SEPARATOR);
+									        } else if (st.equals("comment")){
+									            exportBuffer.append(DEFAULT_QUOTE);        
+			                                    exportBuffer.append((obs!=null)?obs.getComment():"");                                   
+			                                    exportBuffer.append(DEFAULT_QUOTE);
+			                                    exportBuffer.append(DEFAULT_COLUMN_SEPARATOR);
+									        }
+									    }
 									}
-								}
+								}															
 							}
 						}
 					}
 				}
 			}
 			exportBuffer.append("\n");
-		}
+		}		
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see
-	 * org.openmrs.module.formdataexport.FormDataExportService#countForms(org
-	 * .openmrs.Cohort)
+
+	
+	/* (non-Javadoc)
+	 * @see org.openmrs.module.formdataexport.FormDataExportService#countForms(org.openmrs.Cohort)
 	 */
 	public Map<Form, Integer> countForms(Cohort patients) {
 		return dao.countForms(patients);
 	}
+
+
+
+	
+	
+	
+	/**
+	 * Write out the form column headers for the export.
+	 * 
+	 * @param form
+	 * @param exportBuffer
+	public void writeFormColumnData(Form form, StringBuffer exportBuffer) { 
+		
+		TreeMap<Integer, TreeSet<FormField>> formStructure = 
+			FormUtil.getFormStructure(form);
+		
+		StringBuffer fieldNumber = new StringBuffer();
+		
+		// Iterate over high level nodes
+		for(Integer id : formStructure.keySet()) { 
+
+			// Iterate over the actual questions
+			TreeSet<FormField> formFields = formStructure.get(id);
+				
+			for(FormField formField : formFields) { 				
+				Field field = formField.getField();
+				
+				if ("Concept".equals(field.getFieldType().getName())) { 
+					
+					// Get the field number and part
+					if (formField.getFieldNumber()!=null) { 
+						fieldNumber.append(formField.getFieldNumber());
+						if (formField.getFieldPart()!=null) 
+							fieldNumber.append(formField.getFieldPart());
+					}
+					
+					// Check if concept exists (it should)
+					if (field.getConcept() != null) { 
+
+						// Create a column name based on the concept
+						Concept concept = field.getConcept();
+						addColumnHeader(exportBuffer, fieldNumber.toString(), concept, false);
+						
+						if ( concept.getConceptSets()!= null) { 
+							for (ConceptSet cs : formField.getField().getConcept().getConceptSets()) { 
+								addColumnHeader(exportBuffer, fieldNumber.toString(), cs.getConcept(), false);
+
+							}							
+						} 
+					}
+				}
+				fieldNumber.setLength(0);
+				
+			}
+			
+		}
+		
+		log.info("Column Buffer: " + exportBuffer.toString());		
+	}
+		 */
+
+	
+	
+	/**
+	 * Adds columns to the based on concepts related to the specified form.
+	 * 
+	 * @param export
+	 * @param form
+	 * @param extras
+	public void addFormColumns(DataExportReportObject export, Form form, String [] extras) { 
+		
+		// Calculate the number of times each concept appears in the form
+		Map<Concept, Integer> hitsByConcept = getHitsByConcept(form);
+		
+		//Order the fields by their field number and field part
+		//Comparator<FormField> comparator = new FormFieldComparator();
+		List<FormField> formFields = new LinkedList<FormField>();
+		formFields.addAll(form.getFormFields());
+		Collections.sort(formFields);			
+
+		StringBuffer columnName = new StringBuffer();
+
+		// Iterate through the fields in the form and add the concepts to the export		
+		if ( formFields != null ) { 
+			for (FormField formField : formFields) { 
+				Concept concept = formField.getField().getConcept();
+								
+				if (concept != null) { 
+
+					// Figure out how many times this concept occurs for this form
+					Integer hits = hitsByConcept.get(concept); 
+					
+					// Reset column name buffer
+					columnName.setLength(0);
+
+					// Get column name
+					
+					
+					
+					// Add the first level of concepts in a concept set (sub-questions)
+					// Append the column names with concept ID to differentiate since the column name
+					// will start with the column name of the top-level question
+					Collection<ConceptSet> conceptSets = concept.getConceptSets();
+					if (conceptSets != null && !conceptSets.isEmpty()) { 
+						StringBuffer buffer = new StringBuffer();
+						for (ConceptSet conceptSet : conceptSets) {
+							buffer.setLength(0);							
+							buffer.append(getColumnName(formField));
+							buffer.append(columnName.toString()).
+								append("_").
+								append(conceptSet.getConcept().getConceptId());
+							
+							ConceptColumn column = 
+								createColumn(buffer.toString(), conceptSet.getConcept(), hits, extras);
+							
+							export.getColumns().add(column);
+							
+						}
+					} 
+					// Otherwise just add the concept that goes along with it
+					else { 
+						
+						columnName.append(getColumnName(formField));
+						
+						ConceptColumn column = 
+							createColumn(columnName.toString(), concept, hits, extras);
+						
+						export.getColumns().add(column);
+					} 
+					hitsByConcept.remove(concept);
+				}
+
+			}
+		}
+	}
+	*/
+
+
+	
+	/**
+	 * Create a column based on the concept representing the question that is being asked.  
+	 * 
+	 * @param name
+	 * @param concept
+	 * @param occurs
+	 * @param extras
+	 * @return
+	public ConceptColumn createColumn(String name, Concept concept, Integer occurs, String [] extras) { 
+		ConceptColumn column = null;
+		System.out.println("Name: " + name + ", Concept: " + concept + ", Occurs: " + occurs);
+								
+			column = new ConceptColumn();
+			column.setColumnName(name.toString());
+			column.setConceptId(concept.getConceptId());
+			column.setExtras(extras);				
+	
+			if (occurs != null && occurs > 1) { 				
+				column.setModifier(DataExportReportObject.MODIFIER_LAST_NUM);
+				column.setModifierNum(occurs);	
+			} 
+			else { 
+				column.setModifier(DataExportReportObject.MODIFIER_LAST);										
+			}
+		return column;
+	}
+	 */
+		
+	
+	
+	
+	/**
+	 * Creates a map of concepts with the number of times they appear in a given form.
+	 * 
+	 * TODO Currently only supports high level concepts.
+	 * 
+	 * @param 	form	the form to process
+	 * @return	a map that keeps track of the number of times a concept occurs in a form
+	public Map<Concept, Integer> getHitsByConcept(Form form) { 
+		Map<Concept, Integer> map = new HashMap<Concept, Integer>();
+
+		System.out.println("There are " + form.getFormFields().size() + " fields on this form");
+		for (FormField formField : form.getFormFields()) {
+					
+			
+			Concept concept = formField.getField().getConcept();
+			if (concept != null) { 				
+				System.out.println("Concept " + concept.getName().getShortName());
+				if (concept.getConceptSets() != null && !concept.getConceptSets().isEmpty()) { 
+					for (ConceptSet set : concept.getConceptSets()) { 						
+						Concept child = set.getConcept();
+						System.out.println("\tConcept " + child.getName().getShortName());
+						Integer hits = map.get(child);
+						if (hits == null) hits = new Integer(0);
+						hits++;
+						map.put(concept, hits);					
+					}					
+				} 
+				else { 
+					Integer hits = map.get(concept);
+					if (hits == null) hits = new Integer(0);
+					hits++;
+					map.put(concept, hits);
+				}
+			}
+		}
+		return map;
+	}
+	 */
+
+	
+	/**
+	 * 
+	 * @param formField
+	 * @return
+	public String getColumnName(FormField formField) { 
+		
+		StringBuffer buffer = new StringBuffer();
+
+		// Add field number and field part if they exist
+		if (formField.getFieldNumber() != null ) {
+			buffer.append(formField.getFieldNumber());						
+			if (formField.getFieldPart() != null ) 
+				buffer.append(formField.getFieldPart());							
+			buffer.append(" ");
+		}
+		
+		try { 
+			String shortName = 
+				formField.getField().getConcept().getName().getShortName();
+
+
+			if (shortName != null && !shortName.isEmpty() ) 
+				buffer.append(shortName);
+			else  
+				buffer.append("Concept ").append(formField.getField().getConcept().getConceptId());
+							
+		}
+		catch (Exception e) { 
+			log.info("Concept short name is null, using field number/field part or concept name");			
+		}
+
+		
+		return buffer.toString();
+		
+	}
+	 */	
+	
+	
+	/*
+	public File exportFormData(Form form, PatientSet patients, String [] extraColumns) throws Exception { 
+		
+		//Form form = Context.getFormService().getForm(formId);
+		
+		
+		if ( form == null ) {
+			throw new Exception("Form cannot be null");
+		} 
+		else {
+
+			// Create new export
+			DataExportReportObject export = new DataExportReportObject();
+			export.setName(FORM_DATA_EXPORT_PREFIX + "_" + form.getName());
+
+			// Populate export with columns
+			addStaticColumns(export);
+			
+			// Populate export with columns from the form
+			addFormColumns(export, form, extraColumns);
+			
+			// If patients not passed in, set the cohort to all patients having encounters
+			if (patients == null || patients.getSize() <= 0)				
+				patients = getPatientsHavingEncounters(form);
+
+			// If patients is still null, set cohort to all patients
+			if (patients == null || patients.getSize() <= 0)
+				patients = Context.getPatientSetService().getAllPatients();			
+			
+			log.info("Patients: " + patients);
+			
+			// Export the data as a TSV file
+			DataExportUtil.generateExport(export, patients);
+			File tempExportFile = DataExportUtil.getGeneratedFile(export);
+			
+			// Convert the file to CSV
+			String tsv = tempExportFile.getCanonicalPath();
+			String csv = FormDataExportUtil.changeExtension(tsv, "csv");
+			FormDataExportUtil.convertFormat(tsv, "\t", csv, ",");
+			
+			return new File(csv);
+			
+			
+		}		
+		
+	}
+	*/	
+	
+
 }
+
+/**
+ * 
+ */
+class FormFieldComparator implements Comparator<FormField> { 
+	public int compare(FormField ff1, FormField ff2) {
+		int fieldNumber1 = ff1.getFieldNumber()!=null ? ff1.getFieldNumber() : 0;
+		int fieldNumber2 = ff2.getFieldNumber()!=null ? ff2.getFieldNumber() : 0;
+		int compare = fieldNumber1 - fieldNumber2;
+		if (compare == 0) { 
+			String fieldPart1 = ff1.getFieldPart()!=null ? ff1.getFieldPart() : "";
+			String fieldPart2 = ff2.getFieldPart()!=null ? ff2.getFieldPart() : "";
+			compare = fieldPart1.compareTo(fieldPart2);
+		}
+		return  compare;
+	}			 
+}			

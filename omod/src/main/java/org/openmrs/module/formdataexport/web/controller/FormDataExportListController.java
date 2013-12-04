@@ -127,11 +127,13 @@ public class FormDataExportListController extends SimpleFormController {
 				// If it does, then we write it to the responses
 				else { 				
 					String timestamp = new SimpleDateFormat("yyyyMMdd_Hm").format(new Date());
-					//String filename = exportFile.getName().replace(" ", "_") + "-" + timestamp + ".xls";
-					String filename = exportFile.getName().replace(" ", "_") + "-" + timestamp + ".csv";
+					//String filename = exportFile.getName().replace(" ", "_") + "-" + timestamp + ".xlsx";
+					String filename = exportFile.getName().replace(" ", "_");
+					//String filename = exportFile.getName().replace(" ", "_") + "-" + timestamp + ".csv";
 					response.setHeader("Content-Disposition", "attachment; filename=" + filename);
 					//application/vnd.ms-excel
-					response.setContentType("text/csv");
+					//response.setContentType("text/csv");
+					response.setContentType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
 					response.setHeader("Pragma", "no-cache");
 	
 					InputStream inputStream = null;
