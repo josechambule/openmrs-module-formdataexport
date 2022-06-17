@@ -2,9 +2,9 @@ package org.openmrs.module.formdataexport;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.openmrs.module.Activator;
+import org.openmrs.module.BaseModuleActivator;
 
-public class FormDataExportActivator implements Activator {
+public class FormDataExportActivator extends BaseModuleActivator {
 
 	private Log log = LogFactory.getLog(this.getClass());
 

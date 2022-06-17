@@ -4,15 +4,15 @@
 <module configVersion="1.0">
 	
 	<!-- Base Module Properties -->
-	<id>@MODULE_ID@</id>
-	<name>@MODULE_NAME@</name>
-	<version>@MODULE_VERSION@</version>
-	<package>@MODULE_PACKAGE@</package>
+	<id>formdataexport</id>
+	<name>Form Data Export</name>
+	<version>1.0.0</version>
+	<package>org.openmrs.module.formdataexport</package>
 	<author>PIH</author>
 	<description>
 			OpenMRS Form Data Export Module
 	</description>
-	<activator>@MODULE_PACKAGE@.FormDataExportActivator</activator>
+	<activator>org.openmrs.module.formdataexport.FormDataExportActivator</activator>
 
 	<updateURL>https://dev.openmrs.org/modules/download/formdataexport/update.rdf</updateURL>
 	<!-- /Base Module Properties -->
@@ -25,7 +25,7 @@
 	<!-- Extensions -->
 	<extension>
 		<point>org.openmrs.admin.list</point>
-		<class>@MODULE_PACKAGE@.extension.html.FormDataExportAdminExt</class>
+		<class>org.openmrs.module.formdataexport.extension.html.FormDataExportAdminExt</class>
 	</extension>
 	<!-- /Extensions -->
 	
@@ -33,7 +33,7 @@
 	<!-- AOP --><!--
 	<advice>
 		<point>org.openmrs.api.FormService</point>
-		<class>@MODULE_PACKAGE@.advice.DuplicateFormAdvisor</class>
+		<class>org.openmrs.module.formdataexport.advice.DuplicateFormAdvisor</class>
 	</advice>
 	--><!-- /AOP -->
 	
@@ -53,6 +53,9 @@
 	</privilege>
 	<!-- /Required Privileges -->
 
+	<aware_of_modules>
+		<aware_of_module>org.openmrs.module.legacyui</aware_of_module>
+	</aware_of_modules>
 
 	<!-- Required Global Properties -->
 	<globalProperty>

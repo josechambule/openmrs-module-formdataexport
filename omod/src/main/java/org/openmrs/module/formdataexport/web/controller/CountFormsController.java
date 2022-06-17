@@ -37,7 +37,8 @@ public class CountFormsController extends SimpleFormController {
 			FormDataExportService service = (FormDataExportService) Context.getService(FormDataExportService.class);
 			Cohort cohort = null;
 			if (command.getProgram() != null) {
-				cohort = Context.getPatientSetService().getPatientsByProgramAndState(command.getProgram(), null, null, null);
+				// devo fazer um metodo para trocar isto
+				//cohort = Context.getPatientSetService().getPatientsByProgramAndState(command.getProgram(), null, null, null);
 			}
 			command.setResults(service.countForms(cohort));
 		}

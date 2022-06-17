@@ -84,6 +84,12 @@
 				<scope>provided</scope>
 			</dependency>
 			<!-- Begin OpenMRS modules dependencies -->
+			<dependency>
+				<groupId>org.openmrs.module</groupId>
+				<artifactId>legacyui-omod</artifactId>
+				<version>1.8.2</version>
+				<scope>provided</scope>
+			</dependency>
 			
 			<!-- Begin SIBI dependencies -->
 		<dependency>
@@ -122,7 +128,7 @@
 	</dependencyManagement>
 
 	<properties>
-		<openMRSVersion>1.9.1</openMRSVersion>
+		<openMRSVersion>2.3.2</openMRSVersion>
 		<openMRSMinorVersion>1.9</openMRSMinorVersion>
 		<htmlformentryModuleVersion>2.0.4</htmlformentryModuleVersion>
 		<reportingModuleVersion>0.7.5</reportingModuleVersion>
@@ -142,8 +148,8 @@
 					<groupId>org.apache.maven.plugins</groupId>
 					<artifactId>maven-compiler-plugin</artifactId>
 					<configuration>
-						<target>1.6</target>
-						<source>1.6</source>
+						<target>1.7</target>
+						<source>1.7</source>
 					</configuration>
 				</plugin>
 				<plugin>

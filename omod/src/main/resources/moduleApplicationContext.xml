@@ -11,6 +11,7 @@
 	            <prop key="module/formdataexport/formDataExport.list">formDataExportList</prop>
 				<!--<prop key="module/formdataexport/formDataExport.form">formDataExportForm</prop>-->
 				<prop key="module/formdataexport/countForms.list">countFormsList</prop>
+				<prop key="module/formdataexport/userDataExport.list">userDataExportList</prop>
 			</props>
 		</property>
 	</bean>
@@ -43,7 +44,7 @@
 		</property>
 	</bean>
 	
-	<!-- Controllers -->	
+	<!-- Controllers -->
 	<bean id="formDataExportList" class="org.openmrs.module.formdataexport.web.controller.FormDataExportListController">
 		<property name="commandName"><value>formList</value></property>
 		<property name="formView"><value>/module/formdataexport/formDataExportList</value></property>
@@ -54,6 +55,11 @@
 		<property name="formView"><value>/module/formdataexport/countFormsList</value></property>
 		<property name="successView"><value>countForms.list</value></property>
 	</bean>
+	<bean id="userDataExportList" class="org.openmrs.module.formdataexport.web.controller.UserDataExportListController">
+		<property name="commandName"><value>userList</value></property>
+		<property name="formView"><value>/module/formdataexport/userDataExport</value></property>
+		<property name="successView"><value>userDataExport.list</value></property>
+	</bean>	
 	<!-- /Controllers -->
 	
 	

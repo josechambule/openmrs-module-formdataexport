@@ -25,6 +25,7 @@ public class FormDataExportAdminExt extends AdministrationSectionExt {
 		Map<String, String> map = new LinkedHashMap<String, String>();
 		map.put("module/formdataexport/formDataExport.list", "formdataexport.FormDataExport.title");
 		map.put("module/formdataexport/countForms.list", "formdataexport.countForms.title");
+		map.put("module/formdataexport/userDataExport.list", "formdataexport.UserDataExport.title");
 		return map;
 	}
 	

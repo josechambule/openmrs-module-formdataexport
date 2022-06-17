@@ -93,9 +93,9 @@ public class HtmlFormEntryExportUtil {
         Locale loc = Context.getLocale();
         if (of.getQuestion() != null){
             //TODO: add fieldId, fieldPart, Page???
-            sb.append(of.getQuestion().getBestShortName(loc));
+            sb.append(of.getQuestion().getName(loc));
         } else if (of.getAnswers().size() == 1){
-            sb.append(of.getAnswers().get(0).getConcept().getBestShortName(loc));
+            sb.append(of.getAnswers().get(0).getConcept().getName(loc));
         } else {
             throw new RuntimeException("Obs Field has no conceptId, and multiple answers -- this isn't yet supported.");
         }
@@ -211,7 +211,7 @@ public class HtmlFormEntryExportUtil {
             if (ose.getConcept() != null)
                 sb.append((o != null) ? o.getValueAsString(locale):EMPTY);
             else 
-                sb.append((o != null) ? o.getConcept().getBestName(locale):EMPTY);
+                sb.append((o != null) ? o.getConcept().getName(locale):EMPTY);
             sb.append(DEFAULT_QUOTE);
             
             sb.append(DEFAULT_COLUMN_SEPARATOR);

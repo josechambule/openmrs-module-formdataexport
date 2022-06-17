@@ -6,8 +6,11 @@ import java.util.Comparator;
 import java.util.Date;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.ListIterator;
 import java.util.Map;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.hibernate.CacheMode;
 import org.hibernate.Criteria;
 import org.hibernate.Query;
@@ -16,12 +19,16 @@ import org.hibernate.criterion.Expression;
 import org.hibernate.criterion.Restrictions;
 import org.openmrs.Cohort;
 import org.openmrs.Encounter;
+import org.openmrs.EncounterType;
 import org.openmrs.Form;
+import org.openmrs.Location;
 import org.openmrs.module.formdataexport.db.FormDataExportDAO;
 
 public class HibernateFormDataExportDAO implements FormDataExportDAO {
 
 	private SessionFactory sessionFactory;
+	
+	protected final Log log = LogFactory.getLog(getClass());
 	
 	public SessionFactory getSessionFactory() {
 		return sessionFactory;
@@ -91,5 +98,63 @@ public class HibernateFormDataExportDAO implements FormDataExportDAO {
         return criteria.list();
 	}
 	
-
+	public Cohort getPatientsHavingEncounters(List<EncounterType> encounterTypeList, Location location, Form form,
+	        Date fromDate, Date toDate, Integer minCount, Integer maxCount) {
+		List<Integer> encTypeIds = null;
+		if (encounterTypeList != null && encounterTypeList.size() > 0) {
+			encTypeIds = new ArrayList<Integer>();
+			for (EncounterType t : encounterTypeList)
+				encTypeIds.add(t.getEncounterTypeId());
+		}
+		Integer locationId = location == null ? null : location.getLocationId();
+		Integer formId = form == null ? null : form.getFormId();
+		List<String> whereClauses = new ArrayList<String>();
+		whereClauses.add("e.voided = false");
+		if (encTypeIds != null)
+			whereClauses.add("e.encounter_type in (:encTypeIds)");
+		if (locationId != null)
+			whereClauses.add("e.location_id = :locationId");
+		if (formId != null)
+			whereClauses.add("e.form_id = :formId");
+		if (fromDate != null)
+			whereClauses.add("e.encounter_datetime >= :fromDate");
+		if (toDate != null)
+			whereClauses.add("e.encounter_datetime <= :toDate");
+		List<String> havingClauses = new ArrayList<String>();
+		if (minCount != null)
+			havingClauses.add("count(*) >= :minCount");
+		if (maxCount != null)
+			havingClauses.add("count(*) >= :maxCount");
+		StringBuilder sb = new StringBuilder();
+		sb.append(" select e.patient_id from encounter e ");
+		sb.append(" inner join patient p on e.patient_id = p.patient_id and p.voided = false ");
+		for (ListIterator<String> i = whereClauses.listIterator(); i.hasNext();) {
+			sb.append(i.nextIndex() == 0 ? " where " : " and ");
+			sb.append(i.next());
+		}
+		sb.append(" group by e.patient_id ");
+		for (ListIterator<String> i = havingClauses.listIterator(); i.hasNext();) {
+			sb.append(i.nextIndex() == 0 ? " having " : " and ");
+			sb.append(i.next());
+		}
+		log.debug("query: " + sb);
+		
+		Query query = sessionFactory.getCurrentSession().createSQLQuery(sb.toString());
+		if (encTypeIds != null)
+			query.setParameterList("encTypeIds", encTypeIds);
+		if (locationId != null)
+			query.setInteger("locationId", locationId);
+		if (formId != null)
+			query.setInteger("formId", formId);
+		if (fromDate != null)
+			query.setDate("fromDate", fromDate);
+		if (toDate != null)
+			query.setDate("toDate", toDate);
+		if (minCount != null)
+			query.setInteger("minCount", minCount);
+		if (maxCount != null)
+			query.setInteger("maxCount", maxCount);
+		
+		return new Cohort(query.list());
+	}
 }
