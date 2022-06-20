@@ -24,6 +24,7 @@ import org.openmrs.api.UserService;
 import java.util.List;
 import java.util.ArrayList;
 import org.openmrs.api.context.Context;
+import org.openmrs.api.db.LoginCredential;
 import org.openmrs.User;
 import java.util.Vector;
 import javax.servlet.http.HttpServletRequest;
@@ -165,26 +166,42 @@ public class UserDataExportListController extends SimpleFormController {
 	}
 
 	private void writeUserList(User user, Row row) {
+		LoginCredential loginCredential = new LoginCredential();
+		loginCredential = userDataExportService.getUserLoginCredential(user);
 		Cell cell = row.createCell(0);
 		cell.setCellValue((double) user.getUserId());
 		cell = row.createCell(1);
 		cell.setCellValue(user.getSystemId());
 		cell = row.createCell(2);
-		cell.setCellValue(user.getUsername());
+		cell.setCellValue(loginCredential.getHashedPassword());
 		cell = row.createCell(3);
-		// cell.setCellValue(user.getEmail());
+		cell.setCellValue(loginCredential.getSalt());
 		cell = row.createCell(4);
-		cell.setCellValue(user.getUuid());
+		cell.setCellValue(loginCredential.getSecretQuestion());
 		cell = row.createCell(5);
-		cell.setCellValue((double) user.getPerson().getPersonId());
+		cell.setCellValue(loginCredential.getSecretAnswer());
 		cell = row.createCell(6);
-		cell.setCellValue(user.getPerson().getGivenName());
+		cell.setCellValue(user.getUsername());
 		cell = row.createCell(7);
-		cell.setCellValue(user.getPerson().getFamilyName());
+		cell.setCellValue(user.getRetired());
 		cell = row.createCell(8);
-		cell.setCellValue(user.getPerson().getMiddleName());
+		cell.setCellValue(user.getEmail());
 		cell = row.createCell(9);
+		cell.setCellValue(user.getUuid());
+		cell = row.createCell(10);
+		cell.setCellValue((double) user.getPerson().getPersonId());
+		cell = row.createCell(11);
+		cell.setCellValue(user.getPerson().getGivenName());
+		cell = row.createCell(12);
+		cell.setCellValue(user.getPerson().getFamilyName());
+		cell = row.createCell(13);
+		cell.setCellValue(user.getPerson().getMiddleName());
+		cell = row.createCell(14);
 		cell.setCellValue(user.getPerson().getUuid());
+		cell = row.createCell(15);
+		cell.setCellValue(user.getAllRoles().toString());
+		cell = row.createCell(16);
+		cell.setCellValue(user.getPrivileges().toString());
 	}
 
 	public void createHeaderRow(Sheet sheet) {
@@ -202,30 +219,51 @@ public class UserDataExportListController extends SimpleFormController {
 		Cell cellSystemId = row.createCell(1);
 		cellSystemId.setCellStyle(cellStyle);
 		cellSystemId.setCellValue("SystemId");
-		Cell cellUserName = row.createCell(2);
+		Cell cellUserhashedPassword = row.createCell(2);
+		cellUserhashedPassword.setCellStyle(cellStyle);
+		cellUserhashedPassword.setCellValue("Password");
+		Cell cellUsersalt = row.createCell(3);
+		cellUsersalt.setCellStyle(cellStyle);
+		cellUsersalt.setCellValue("Salt");
+		Cell cellUsersecretQuestion = row.createCell(4);
+		cellUsersecretQuestion.setCellStyle(cellStyle);
+		cellUsersecretQuestion.setCellValue("Secret Question");
+		Cell cellUsersecretAnswer = row.createCell(5);
+		cellUsersecretAnswer.setCellStyle(cellStyle);
+		cellUsersecretAnswer.setCellValue("Secret Answer");		
+		Cell cellUserName = row.createCell(6);
 		cellUserName.setCellStyle(cellStyle);
 		cellUserName.setCellValue("UserName");
-		Cell cellEmail = row.createCell(3);
+		Cell cellRetired = row.createCell(7);
+		cellRetired.setCellStyle(cellStyle);
+		cellRetired.setCellValue("Retired");
+		Cell cellEmail = row.createCell(8);
 		cellEmail.setCellStyle(cellStyle);
 		cellEmail.setCellValue("Email");
-		Cell cellUUID = row.createCell(4);
+		Cell cellUUID = row.createCell(9);
 		cellUUID.setCellStyle(cellStyle);
 		cellUUID.setCellValue("User UUID");
-		Cell cellPersonId = row.createCell(5);
+		Cell cellPersonId = row.createCell(10);
 		cellPersonId.setCellStyle(cellStyle);
 		cellPersonId.setCellValue("PersonId");
-		Cell cellPersonName = row.createCell(6);
+		Cell cellPersonName = row.createCell(11);
 		cellPersonName.setCellStyle(cellStyle);
 		cellPersonName.setCellValue("PersonName");
-		Cell cellFamilyName = row.createCell(7);
+		Cell cellFamilyName = row.createCell(12);
 		cellFamilyName.setCellStyle(cellStyle);
 		cellFamilyName.setCellValue("FamilyName");
-		Cell cellMiddleName = row.createCell(8);
+		Cell cellMiddleName = row.createCell(13);
 		cellMiddleName.setCellStyle(cellStyle);
 		cellMiddleName.setCellValue("MiddleName");
-		Cell cellPersonUUID = row.createCell(9);
+		Cell cellPersonUUID = row.createCell(14);
 		cellPersonUUID.setCellStyle(cellStyle);
 		cellPersonUUID.setCellValue("PersonUUID");
+		Cell cellRoles = row.createCell(15);
+		cellRoles.setCellStyle(cellStyle);
+		cellRoles.setCellValue("Roles");
+		Cell cellPrivileges = row.createCell(16);
+		cellPrivileges.setCellStyle(cellStyle);
+		cellPrivileges.setCellValue("Privileges");
 	}
 
 	public void createExcelFile(List<User> listUser, HttpServletResponse response) throws Exception {

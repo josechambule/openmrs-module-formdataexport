@@ -6,6 +6,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.openmrs.User;
 import org.openmrs.api.APIException;
+import org.openmrs.api.db.LoginCredential;
 import org.openmrs.api.impl.BaseOpenmrsService;
 import org.openmrs.module.formdataexport.UserDataExportService;
 import org.openmrs.module.formdataexport.db.UserDataExportDAO;
@@ -33,6 +34,12 @@ public class UserDataExportServiceImpl extends BaseOpenmrsService implements Use
 	public List<User> getUserByUsername(String username) throws APIException {
 		// TODO Auto-generated method stub
 		return dao.getUserByUsername(username);
+	}
+	
+	@Override
+	public LoginCredential getUserLoginCredential(User user) {
+		// TODO Auto-generated method stub
+		return dao.getUserLoginCredential(user);
 	}
 
 }

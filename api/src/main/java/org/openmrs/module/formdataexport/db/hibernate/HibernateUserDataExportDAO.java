@@ -7,6 +7,7 @@ import org.apache.commons.logging.LogFactory;
 import org.hibernate.Query;
 import org.hibernate.SessionFactory;
 import org.openmrs.User;
+import org.openmrs.api.db.LoginCredential;
 import org.openmrs.module.formdataexport.db.UserDataExportDAO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
@@ -39,6 +40,12 @@ public class HibernateUserDataExportDAO implements UserDataExportDAO {
 		}
 
 		return users;
+	}
+
+	@Override
+	public LoginCredential getUserLoginCredential(User user) {
+		// TODO Auto-generated method stub
+		return (LoginCredential) sessionFactory.getCurrentSession().get(LoginCredential.class, user.getUserId());
 	}
 
 }
