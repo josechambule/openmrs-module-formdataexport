@@ -26,6 +26,7 @@ public class FormDataExportAdminExt extends AdministrationSectionExt {
 		map.put("module/formdataexport/formDataExport.list", "formdataexport.FormDataExport.title");
 		map.put("module/formdataexport/countForms.list", "formdataexport.countForms.title");
 		map.put("module/formdataexport/userDataExport.list", "formdataexport.UserDataExport.title");
+		map.put("module/formdataexport/userDataImport.form", "formdataexport.UserDataImport.title");
 		return map;
 	}
 	

@@ -32,6 +32,10 @@ import org.apache.commons.logging.LogFactory;
 import org.apache.commons.logging.Log;
 import org.springframework.web.servlet.mvc.SimpleFormController;
 
+/**
+ * @author jose.chambule
+ *
+ */
 @SuppressWarnings("deprecation")
 @Controller
 public class UserDataExportListController extends SimpleFormController {
@@ -49,7 +53,7 @@ public class UserDataExportListController extends SimpleFormController {
 	}
 
 	@Override
-	protected Object formBackingObject(final HttpServletRequest request) throws ServletException {
+	protected Object formBackingObject(HttpServletRequest request) throws ServletException {
 		List<User> userList = new Vector<User>();
 		if (Context.isAuthenticated()) {
 			UserService us = Context.getUserService();
@@ -96,13 +100,13 @@ public class UserDataExportListController extends SimpleFormController {
 				pointPage = 29;
 			}
 
-			request.setAttribute("searchId", (Object) searchId);
-			request.setAttribute("userList", (Object) list);
-			request.setAttribute("noOfPages", (Object) noOfPages);
-			request.setAttribute("currentPage", (Object) page);
-			request.setAttribute("pointPage", (Object) pointPage);
-			request.setAttribute("recordsPerPageList", (Object) this.getListRecordsPerPage());
-			request.setAttribute("recordsPerPage", (Object) recordsPerPage);
+			request.setAttribute("searchId", searchId);
+			request.setAttribute("userList", list);
+			request.setAttribute("noOfPages", noOfPages);
+			request.setAttribute("currentPage", page);
+			request.setAttribute("pointPage", pointPage);
+			request.setAttribute("recordsPerPageList", getListRecordsPerPage());
+			request.setAttribute("recordsPerPage", recordsPerPage);
 			return list;
 		}
 		return userList;
@@ -126,7 +130,7 @@ public class UserDataExportListController extends SimpleFormController {
 			}
 		} catch (Exception e) {
 			// TODO Auto-generated catch block
-			this.log.error("An error occured while export form data ", e);
+			log.error("An error occured while export form data ", e);
 			request.getSession().setAttribute("openmrs_error",
 					("formdataexport.FormDataExport.GeneralError: " + e.getMessage()));
 		}

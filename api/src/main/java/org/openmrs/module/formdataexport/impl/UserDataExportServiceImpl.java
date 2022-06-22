@@ -13,6 +13,10 @@ import org.openmrs.module.formdataexport.db.UserDataExportDAO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+/**
+ * @author jose.chambule
+ *
+ */
 @Service(UserDataExportServiceImpl.BEAN_NAME)
 public class UserDataExportServiceImpl extends BaseOpenmrsService implements UserDataExportService {
 

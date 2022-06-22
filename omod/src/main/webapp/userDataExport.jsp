@@ -1,6 +1,6 @@
 <%@ include file="/WEB-INF/template/include.jsp"%>
 <openmrs:require privilege="Manage Data Exports" otherwise="/login.htm"
-	redirect="/module/formdataexport/formDataExport.list" />
+	redirect="/module/formdataexport/userDataExport.list" />
 <%@ include file="/WEB-INF/template/header.jsp"%>
 <%@ include file="localHeader.jsp"%>
 <openmrs:htmlInclude file="/scripts/calendar/calendar.js" />

@@ -12,6 +12,10 @@ import org.openmrs.module.formdataexport.db.UserDataExportDAO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 
+/**
+ * @author jose.chambule
+ *
+ */
 @Repository("formdataexport.HibernateUserDataExportDAO")
 public class HibernateUserDataExportDAO implements UserDataExportDAO {
 
@@ -30,7 +34,6 @@ public class HibernateUserDataExportDAO implements UserDataExportDAO {
 		// TODO Auto-generated method stub
 		Query query = sessionFactory.getCurrentSession()
 				.createQuery("from User u where u.username like '%" + username + "%'");
-		// query.setString("username", "%"+username+"%");
 		// query.setString("username", "%"+username+"%");
 		List<User> users = query.list();
 

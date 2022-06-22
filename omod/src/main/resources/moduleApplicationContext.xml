@@ -12,6 +12,7 @@
 				<!--<prop key="module/formdataexport/formDataExport.form">formDataExportForm</prop>-->
 				<prop key="module/formdataexport/countForms.list">countFormsList</prop>
 				<prop key="module/formdataexport/userDataExport.list">userDataExportList</prop>
+				<prop key="module/formdataexport/userDataImport.form">userDataImportForm</prop>
 			</props>
 		</property>
 	</bean>
@@ -59,7 +60,12 @@
 		<property name="commandName"><value>userList</value></property>
 		<property name="formView"><value>/module/formdataexport/userDataExport</value></property>
 		<property name="successView"><value>userDataExport.list</value></property>
-	</bean>	
+	</bean>
+	<bean id="userDataImportForm" class="org.openmrs.module.formdataexport.web.controller.UserDataImportFormController">
+		<property name="commandName"><value>txtfile</value></property>
+		<property name="formView"><value>/module/formdataexport/userDataImport</value></property>
+		<property name="successView"><value>userDataImport.form</value></property>
+	</bean>		
 	<!-- /Controllers -->
 	
 	
