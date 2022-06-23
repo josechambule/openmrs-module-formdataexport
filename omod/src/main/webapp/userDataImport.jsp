@@ -12,24 +12,25 @@
 	<spring:message code="formdataexport.UserDataImport.title" />
 </h2>
 <script type="text/javascript">
-	function importData() {
-		var filename = document.getElementById("filename").addEventListener(
-				'change', handleFileSelect, false);
-	}
-
-	function handleFileSelect(evt) {
-
-		var files = evt.target.files; // FileList object
-
+	function UploadProcess() {
+		var fileUpload = document.getElementById("filename");
+		var regex = /^([a-zA-Z0-9\s_\\.\-:])+(.xls|.xlsx)$/;
+        if (regex.test(fileUpload.value.toLowerCase())) {
+        	
+        	//alert('The file "' + fileUpload.value +  '" has been selected.');
+        	//window.location.assign("userDataExport.list?txtefile=" + fileUpload.value);
+        	document.getElementById("txts").value = fileUpload.value;
+        }
 	}
 </script>
 <b class="boxHeader">Import Users</b>
 <div class="box">
 	<form method="post" enctype="multipart/form-data">
 		<spring:message code="formdataexport.UserDataImport.file" />
-		: <input type="file" name="filename" id="filename" value="${txtfile}"/> 
-		<input type="submit"
+		: <input type="file" name="filename" id="filename" accept=".xls,.xlsx" onchange="UploadProcess()"/>
+		<input type="submit" 
 			value="<spring:message code="formdataexport.UserDataImport.import"/>" /><br />${txtefile}
+			<input type="text" name="path" id="txts"/>
 	</form>
 </div>
 <%@ include file="/WEB-INF/template/footer.jsp"%>

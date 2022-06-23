@@ -118,7 +118,7 @@ public class UserDataExportListController extends SimpleFormController {
 			BindException errors) {
 
 		try {
-			String allUser = ServletRequestUtils.getStringParameter((ServletRequest) request, "searchId", "");
+			String allUser = ServletRequestUtils.getStringParameter(request, "searchId", "");
 			List<User> userList = new ArrayList<User>();
 			if (allUser.equalsIgnoreCase("")) {
 				UserService us = Context.getUserService();

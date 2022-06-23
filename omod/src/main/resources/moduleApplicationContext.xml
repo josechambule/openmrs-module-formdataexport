@@ -62,10 +62,9 @@
 		<property name="successView"><value>userDataExport.list</value></property>
 	</bean>
 	<bean id="userDataImportForm" class="org.openmrs.module.formdataexport.web.controller.UserDataImportFormController">
-		<property name="commandName"><value>txtfile</value></property>
 		<property name="formView"><value>/module/formdataexport/userDataImport</value></property>
-		<property name="successView"><value>userDataImport.form</value></property>
-	</bean>		
+		<property name="successView"><value>/module/formdataexport/userDataImport</value></property>
+	</bean>	
 	<!-- /Controllers -->
 	
 	

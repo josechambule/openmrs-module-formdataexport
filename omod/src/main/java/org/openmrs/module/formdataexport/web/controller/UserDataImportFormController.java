@@ -20,7 +20,7 @@ import org.springframework.validation.BindException;
 import org.springframework.web.servlet.ModelAndView;
 import org.springframework.web.servlet.mvc.SimpleFormController;
 
-import java.util.ArrayList;
+import java.io.FileInputStream;
 import java.util.List;
 import org.apache.poi.hssf.usermodel.HSSFSheet;
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
@@ -36,6 +36,7 @@ public class UserDataImportFormController extends SimpleFormController {
 
 	protected Log log;
 	private String txt = "";
+	private String path = "";
 
 	public UserDataImportFormController() {
 		// TODO Auto-generated constructor stub
@@ -44,10 +45,8 @@ public class UserDataImportFormController extends SimpleFormController {
 
 	@Override
 	protected Object formBackingObject(HttpServletRequest request) throws ServletException {
-		List<FileItem> txtfile = new ArrayList<FileItem>();
 		request.setAttribute("txtefile", txt);
-		request.setAttribute("txtfile", txtfile);
-		return txtfile;
+		return path;
 	}
 
 	@Override
@@ -58,10 +57,13 @@ public class UserDataImportFormController extends SimpleFormController {
 			boolean isMultipart = ServletFileUpload.isMultipartContent(request);
 			if (!isMultipart) {
 			} else {
-				txt = "teste3";
+				txt = request.getParameter("filename");
 				FileItemFactory factory = new DiskFileItemFactory();
 				ServletFileUpload upload = new ServletFileUpload(factory);
 				List<FileItem> items = null;
+				path = request.getParameter("path");
+				FileInputStream file;
+				file = new FileInputStream("User_Export_Data.xls"); 
 				try {
 					items = upload.parseRequest(request);
 					txt = "tamanho do item "+items.size();
@@ -73,7 +75,7 @@ public class UserDataImportFormController extends SimpleFormController {
 						} else {
 							txt = "teste5";
 							txt = item.getFieldName();
-							HSSFWorkbook workbook = new HSSFWorkbook(item.getInputStream());
+							HSSFWorkbook workbook = new HSSFWorkbook(file);
 							HSSFSheet sheet = (HSSFSheet) workbook.getSheetAt(0);
 							Row row;
 							for (int i = 1; i <= sheet.getLastRowNum(); i++) { 
@@ -108,11 +110,7 @@ public class UserDataImportFormController extends SimpleFormController {
 		ModelMap map = new ModelMap();
 		request.setAttribute("txtfile", txt);
 		map.put("txtefile", txt);
-		return new ModelAndView(this.getSuccessView(), map);
+		return new ModelAndView(this.getSuccessView());
 	}
 	
-	@Override
-	protected void onFormChange(HttpServletRequest request, HttpServletResponse response, Object command) throws Exception {
-		
-	}
 }
