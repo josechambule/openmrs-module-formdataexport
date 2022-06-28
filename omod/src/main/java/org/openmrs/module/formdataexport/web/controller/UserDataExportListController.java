@@ -201,11 +201,18 @@ public class UserDataExportListController extends SimpleFormController {
 		cell = row.createCell(13);
 		cell.setCellValue(user.getPerson().getMiddleName());
 		cell = row.createCell(14);
-		cell.setCellValue(user.getPerson().getUuid());
+		cell.setCellValue(user.getPerson().getGender());
 		cell = row.createCell(15);
-		cell.setCellValue(user.getAllRoles().toString());
+		if(user.getPerson().getBirthdate() != null) {
+			String data = String.valueOf(user.getPerson().getBirthdate());
+			cell.setCellValue(data);	
+		}			
 		cell = row.createCell(16);
-		cell.setCellValue(user.getPrivileges().toString());
+		cell.setCellValue(user.getPerson().getUuid());
+		cell = row.createCell(17);
+		cell.setCellValue(removeFirstandLast(user.getAllRoles().toString()));
+		cell = row.createCell(18);
+		cell.setCellValue(removeFirstandLast(user.getPrivileges().toString()));
 	}
 
 	public void createHeaderRow(Sheet sheet) {
@@ -259,13 +266,19 @@ public class UserDataExportListController extends SimpleFormController {
 		Cell cellMiddleName = row.createCell(13);
 		cellMiddleName.setCellStyle(cellStyle);
 		cellMiddleName.setCellValue("MiddleName");
-		Cell cellPersonUUID = row.createCell(14);
+		Cell cellGender = row.createCell(14);
+		cellGender.setCellStyle(cellStyle);
+		cellGender.setCellValue("Gender");
+		Cell cellBirthdate = row.createCell(15);
+		cellBirthdate.setCellStyle(cellStyle);
+		cellBirthdate.setCellValue("Birthdate");
+		Cell cellPersonUUID = row.createCell(16);
 		cellPersonUUID.setCellStyle(cellStyle);
 		cellPersonUUID.setCellValue("PersonUUID");
-		Cell cellRoles = row.createCell(15);
+		Cell cellRoles = row.createCell(17);
 		cellRoles.setCellStyle(cellStyle);
 		cellRoles.setCellValue("Roles");
-		Cell cellPrivileges = row.createCell(16);
+		Cell cellPrivileges = row.createCell(18);
 		cellPrivileges.setCellStyle(cellStyle);
 		cellPrivileges.setCellValue("Privileges");
 	}
@@ -283,6 +296,16 @@ public class UserDataExportListController extends SimpleFormController {
 			sheet.setColumnWidth(6, 8000);
 			sheet.setColumnWidth(7, 8000);
 			sheet.setColumnWidth(8, 8000);
+			sheet.setColumnWidth(9, 8000);
+			sheet.setColumnWidth(10, 8000);
+			sheet.setColumnWidth(11, 8000);
+			sheet.setColumnWidth(12, 8000);
+			sheet.setColumnWidth(13, 8000);
+			sheet.setColumnWidth(14, 8000);
+			sheet.setColumnWidth(15, 8000);
+			sheet.setColumnWidth(16, 8000);	
+			sheet.setColumnWidth(17, 8000);	
+			sheet.setColumnWidth(18, 8000);	
 			createHeaderRow((Sheet) sheet);
 			int rowCount = 0;
 			for (User user : listUser) {
@@ -301,4 +324,10 @@ public class UserDataExportListController extends SimpleFormController {
 			outStream.close();
 		}
 	}
+	
+	public String removeFirstandLast(String str)
+    {
+        str = str.substring(1, str.length() - 1);
+        return str;
+    }
 }

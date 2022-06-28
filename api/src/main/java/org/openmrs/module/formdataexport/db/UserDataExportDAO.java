@@ -12,4 +12,5 @@ import org.openmrs.api.db.LoginCredential;
 public interface UserDataExportDAO {
 	public List<User> getUserByUsername(String username);
 	public LoginCredential getUserLoginCredential(User user);
+	public void importUser(User user, LoginCredential credentials);
 }

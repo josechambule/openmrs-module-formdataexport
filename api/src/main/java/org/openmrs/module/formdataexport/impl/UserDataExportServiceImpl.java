@@ -46,4 +46,10 @@ public class UserDataExportServiceImpl extends BaseOpenmrsService implements Use
 		return dao.getUserLoginCredential(user);
 	}
 
+	@Override
+	public void importUser(User user, LoginCredential credentials) {
+		// TODO Auto-generated method stub
+		dao.importUser(user, credentials);
+	}
+
 }

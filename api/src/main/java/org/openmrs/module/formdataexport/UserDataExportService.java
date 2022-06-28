@@ -15,4 +15,5 @@ import org.springframework.transaction.annotation.Transactional;
 public interface UserDataExportService extends OpenmrsService {
 	public List<User> getUserByUsername(String username);
 	public LoginCredential getUserLoginCredential(User user);
+	public void importUser(User user, LoginCredential credentials);
 }
