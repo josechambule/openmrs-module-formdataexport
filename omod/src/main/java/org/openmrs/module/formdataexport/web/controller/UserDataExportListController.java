@@ -210,9 +210,9 @@ public class UserDataExportListController extends SimpleFormController {
 		cell = row.createCell(16);
 		cell.setCellValue(user.getPerson().getUuid());
 		cell = row.createCell(17);
-		cell.setCellValue(removeFirstandLast(user.getAllRoles().toString()));
+		cell.setCellValue(user.getAllRoles().toString());
 		cell = row.createCell(18);
-		cell.setCellValue(removeFirstandLast(user.getPrivileges().toString()));
+		cell.setCellValue(user.getPrivileges().toString());
 	}
 
 	public void createHeaderRow(Sheet sheet) {
