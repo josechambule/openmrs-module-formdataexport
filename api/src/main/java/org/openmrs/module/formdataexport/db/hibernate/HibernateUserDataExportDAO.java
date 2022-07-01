@@ -39,12 +39,7 @@ public class HibernateUserDataExportDAO implements UserDataExportDAO {
 		Query query = sessionFactory.getCurrentSession()
 				.createQuery("from User u where u.username like '%" + username + "%'");
 		// query.setString("username", "%"+username+"%");
-		List<User> users = query.list();
-
-		if (users == null || users.size() == 0) {
-			log.warn("request for username '" + username + "' not found");
-			return null;
-		}
+		List<User> users = query.list();		
 
 		return users;
 	}

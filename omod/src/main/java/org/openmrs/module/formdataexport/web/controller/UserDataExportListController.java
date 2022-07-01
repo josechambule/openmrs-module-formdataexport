@@ -93,7 +93,10 @@ public class UserDataExportListController extends SimpleFormController {
 				}
 			} else {
 				for (int i = (page - 1) * recordsPerPage; i < page * recordsPerPage; ++i) {
-					list.add(listUser.get(i));
+					if(!listUser.isEmpty()) {
+						list.add(listUser.get(i));
+					}
+					
 				}
 			}
 			if (noOfPages > 30) {

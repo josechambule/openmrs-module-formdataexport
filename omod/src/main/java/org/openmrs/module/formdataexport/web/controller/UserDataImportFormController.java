@@ -10,6 +10,7 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -96,7 +97,7 @@ public class UserDataImportFormController extends SimpleFormController {
 				user.setUserId((int) row.getCell(0).getNumericCellValue());
 			}
 			if (row.getCell(1) != null) {
-				user.setSystemId(row.getCell(1).toString());
+				user.setSystemId(trimToNull(row.getCell(1).toString()));
 			}
 			if (row.getCell(2) != null) {
 				loginCredential.setHashedPassword(row.getCell(2).toString());
@@ -118,7 +119,9 @@ public class UserDataImportFormController extends SimpleFormController {
 				user.setRetired(Boolean.valueOf(row.getCell(7).getBooleanCellValue()));
 			}
 			if (row.getCell(8) != null) {
-				user.setEmail(row.getCell(8).toString());
+				String email = row.getCell(8).toString();
+				email = StringUtils.trimToNull(email);
+				user.setEmail(email);			
 			}
 			if (row.getCell(9) != null) {
 				user.setUuid(row.getCell(9).toString());
@@ -161,8 +164,14 @@ public class UserDataImportFormController extends SimpleFormController {
 			if (row.getCell(18) != null) {
 				
 			}
-			person.addName(personName);
-			user.setPerson(person);
+			
+			if(Context.getPersonService().getPersonByUuid(person.getUuid())!=null) {
+				user.setPerson(Context.getPersonService().getPersonByUuid(person.getUuid()));
+			}else {
+				person.addName(personName);
+				user.setPerson(person);
+			}
+			
 			saveImportedData(user, loginCredential);
 			count++;
 		}
@@ -173,6 +182,10 @@ public class UserDataImportFormController extends SimpleFormController {
         str = str.substring(1, str.length() - 1);
         return str;
     }
+	
+	public String trimToNull(String str) {
+		return StringUtils.trimToNull(str);
+	}
 	
 	public void saveImportedData(User user, LoginCredential credentials) {
 		UserService us = Context.getUserService();
