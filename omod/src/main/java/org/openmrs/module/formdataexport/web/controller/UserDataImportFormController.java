@@ -100,52 +100,50 @@ public class UserDataImportFormController extends SimpleFormController {
 				user.setSystemId(trimToNull(row.getCell(1).toString()));
 			}
 			if (row.getCell(2) != null) {
-				loginCredential.setHashedPassword(row.getCell(2).toString());
+				loginCredential.setHashedPassword(trimToNull(row.getCell(2).toString()));
 				loginCredential.setUserId((int) row.getCell(0).getNumericCellValue());
 			}
 			if (row.getCell(3) != null) {
-				loginCredential.setSalt(row.getCell(3).toString());
+				loginCredential.setSalt(trimToNull(row.getCell(3).toString()));
 			}
 			if (row.getCell(4) != null) {
-				loginCredential.setSecretQuestion(row.getCell(4).toString());
+				loginCredential.setSecretQuestion(trimToNull(row.getCell(4).toString()));
 			}
 			if (row.getCell(5) != null) {
-				loginCredential.setSecretAnswer(row.getCell(5).toString());
+				loginCredential.setSecretAnswer(trimToNull(row.getCell(5).toString()));
 			}
 			if (row.getCell(6) != null) {
-				user.setUsername(row.getCell(6).toString());
+				user.setUsername(trimToNull(row.getCell(6).toString()));
 			}
 			if (row.getCell(7) != null) {
 				user.setRetired(Boolean.valueOf(row.getCell(7).getBooleanCellValue()));
 			}
 			if (row.getCell(8) != null) {
-				String email = row.getCell(8).toString();
-				email = StringUtils.trimToNull(email);
-				user.setEmail(email);			
+				user.setEmail(trimToNull(row.getCell(8).toString()));			
 			}
 			if (row.getCell(9) != null) {
-				user.setUuid(row.getCell(9).toString());
+				user.setUuid(trimToNull(row.getCell(9).toString()));
 			}
 			if (row.getCell(10) != null) {
 				//person.setPersonId(Integer.valueOf((int) row.getCell(10).getNumericCellValue()));
 			}
 			if (row.getCell(11) != null) {
-				personName.setGivenName(row.getCell(11).toString());
+				personName.setGivenName(trimToNull(row.getCell(11).toString()));
 			}
 			if (row.getCell(12) != null) {
-				personName.setFamilyName(row.getCell(12).toString());
+				personName.setFamilyName(trimToNull(row.getCell(12).toString()));
 			}
 			if (row.getCell(13) != null) {
-				personName.setMiddleName(row.getCell(13).toString());
+				personName.setMiddleName(trimToNull(row.getCell(13).toString()));
 			}
 			if (row.getCell(14) != null) {
-				person.setGender(row.getCell(14).toString());
+				person.setGender(trimToNull(row.getCell(14).toString()));
 			}
 			if (row.getCell(15) != null) {
 				//person.setBirthdate(row.getCell(15).getDateCellValue());
 			}
 			if (row.getCell(16) != null) {
-				person.setUuid(row.getCell(16).toString());
+				person.setUuid(trimToNull(row.getCell(16).toString()));
 			}
 			if (row.getCell(17) != null) {
 				String roles = removeFirstandLast(row.getCell(17).toString());
