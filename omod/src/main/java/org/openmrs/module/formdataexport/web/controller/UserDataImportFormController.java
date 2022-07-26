@@ -187,10 +187,16 @@ public class UserDataImportFormController extends SimpleFormController {
 	
 	public void saveImportedData(User user, LoginCredential credentials) {
 		UserService us = Context.getUserService();
-		if(us.getUserByUuid(user.getUuid()) == null) {
+		User usr = us.getUserByUuid(user.getUuid());
+		if(usr == null) {
+			user.setUserId(null);
 			userDataExportService.importUser(user, credentials);
-		}else {
-			contador++;
+		}else {			 
+			usr.setRetired(user.getRetired());
+			usr.setUsername(user.getUsername());
+			usr.setSystemId(user.getSystemId());
+			usr.setEmail(user.getEmail());
+			userDataExportService.importUser(usr, credentials);
 		}
 	}
 }

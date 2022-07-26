@@ -53,7 +53,7 @@ public class HibernateUserDataExportDAO implements UserDataExportDAO {
 	@Override
 	public void importUser(User user, LoginCredential credentials) {
 		// TODO Auto-generated method stub
-		user.setUserId(null);
+		//user.setUserId(null);
 		sessionFactory.getCurrentSession().saveOrUpdate(user);
 		updateUserPassword(user, credentials);
 	}
