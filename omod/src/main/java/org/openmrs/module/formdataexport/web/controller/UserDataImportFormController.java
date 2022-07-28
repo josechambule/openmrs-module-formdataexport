@@ -186,6 +186,7 @@ public class UserDataImportFormController extends SimpleFormController {
 	}
 	
 	public void saveImportedData(User user, LoginCredential credentials) {
+		//
 		UserService us = Context.getUserService();
 		User usr = us.getUserByUuid(user.getUuid());
 		if(usr == null) {
