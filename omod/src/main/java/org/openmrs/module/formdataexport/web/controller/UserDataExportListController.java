@@ -23,6 +23,7 @@ import javax.servlet.ServletException;
 import org.openmrs.api.UserService;
 import java.util.List;
 import java.util.ArrayList;
+
 import org.openmrs.api.context.Context;
 import org.openmrs.api.db.LoginCredential;
 import org.openmrs.User;
@@ -40,8 +41,10 @@ import org.springframework.web.servlet.mvc.SimpleFormController;
 @Controller
 public class UserDataExportListController extends SimpleFormController {
 	protected Log log;
-	
+
 	private UserDataExportService userDataExportService;
+	private List<Integer> userIdList = new ArrayList<Integer>();
+	private String usrIDList = "";
 
 	@Autowired
 	public void setUserDataExportService(UserDataExportService userDataExportService) {
@@ -58,9 +61,19 @@ public class UserDataExportListController extends SimpleFormController {
 		if (Context.isAuthenticated()) {
 			UserService us = Context.getUserService();
 			List<User> listUser = new ArrayList<User>();
-			List<User> list = new ArrayList<User>();
+			List<User> list = new ArrayList<User>();			
 			String searchId = ServletRequestUtils.getStringParameter((ServletRequest) request, "searchId", "");
-
+			usrIDList = usrIDList + ServletRequestUtils.getStringParameter(request, "userIDList", "");
+			
+			if(!usrIDList.equalsIgnoreCase("")) {
+				String[] result = usrIDList.split("a");
+				for(String idusr : result) {
+					if (!userIdList.contains(Integer.valueOf(idusr))) {
+						userIdList.add(Integer.valueOf(idusr));
+					}
+				}
+			}
+			
 			if (searchId.equalsIgnoreCase("")) {
 				listUser = us.getAllUsers();
 			} else {
@@ -78,8 +91,7 @@ public class UserDataExportListController extends SimpleFormController {
 					recordsPerPage = 15;
 				}
 			}
-			
-			int noOfPages = (int) Math.ceil(noOfRecords * 1.0 / recordsPerPage);
+
 			if (request.getParameter("recordsPerPage") != null) {
 				recordsPerPage = Integer.parseInt(request.getParameter("recordsPerPage"));
 			}
@@ -87,20 +99,21 @@ public class UserDataExportListController extends SimpleFormController {
 				page = Integer.parseInt(request.getParameter("page"));
 			}
 
+			int noOfPages = (int) Math.ceil(noOfRecords * 1.0 / recordsPerPage);
 			if (page == noOfPages) {
 				for (int i = (page - 1) * recordsPerPage; i < noOfRecords; ++i) {
 					list.add(listUser.get(i));
 				}
 			} else {
 				for (int i = (page - 1) * recordsPerPage; i < page * recordsPerPage; ++i) {
-					if(!listUser.isEmpty()) {
+					if (!listUser.isEmpty()) {
 						list.add(listUser.get(i));
 					}
-					
+
 				}
 			}
-			if (noOfPages > 30) {
-				pointPage = 29;
+			if (noOfPages > 20) {
+				pointPage = 19;
 			}
 
 			request.setAttribute("searchId", searchId);
@@ -110,6 +123,8 @@ public class UserDataExportListController extends SimpleFormController {
 			request.setAttribute("pointPage", pointPage);
 			request.setAttribute("recordsPerPageList", getListRecordsPerPage());
 			request.setAttribute("recordsPerPage", recordsPerPage);
+			request.setAttribute("userIDList", usrIDList);
+
 			return list;
 		}
 		return userList;
@@ -119,17 +134,72 @@ public class UserDataExportListController extends SimpleFormController {
 	@Override
 	protected ModelAndView onSubmit(HttpServletRequest request, HttpServletResponse response, Object command,
 			BindException errors) {
-
 		try {
 			String allUser = ServletRequestUtils.getStringParameter(request, "searchId", "");
+			String userIDList = ServletRequestUtils.getStringParameter(request, "userIDList", "");
+			String[] idUsr = request.getParameterValues("checkButton");
 			List<User> userList = new ArrayList<User>();
+			UserService us = Context.getUserService();
+
 			if (allUser.equalsIgnoreCase("")) {
-				UserService us = Context.getUserService();
-				userList = us.getAllUsers();
+				if (idUsr != null) {
+					for (String idur : idUsr) {
+						if (!userIdList.contains(Integer.valueOf(idur))) {
+							userIdList.add(Integer.valueOf(idur));
+						}
+					}
+				}
+
+				if (!userIDList.equalsIgnoreCase("")) {
+					String[] result = userIDList.split("a");
+					for (String idusr : result) {
+						if (!userIdList.contains(Integer.valueOf(idusr))) {
+							userIdList.add(Integer.valueOf(idusr));
+						}
+					}
+				}
+
+				if (!userIdList.isEmpty()) {
+					for (int id : userIdList) {
+						userList.add(us.getUser(id));
+					}
+				} else {
+					userList = us.getAllUsers();
+				}
+
 				createExcelFile(userList, response);
+				userIdList.clear();
+				usrIDList = "";
 			} else {
-				userList = (List<User>) request.getAttribute("userList");
+
+				if (idUsr != null) {
+					for (String idur : idUsr) {
+						if (!userIdList.contains(Integer.valueOf(idur))) {
+							userIdList.add(Integer.valueOf(idur));
+						}
+					}
+				}
+
+				if (!userIDList.equalsIgnoreCase("")) {
+					String[] result = userIDList.split("a");
+					for (String idusr : result) {
+						if (!userIdList.contains(Integer.valueOf(idusr))) {
+							userIdList.add(Integer.valueOf(idusr));
+						}
+					}
+				}
+
+				if (!userIdList.isEmpty()) {
+					for (int id : userIdList) {
+						userList.add(us.getUser(id));
+					}
+				} else {
+					userList = (List<User>) request.getAttribute("userList");
+				}
+
 				createExcelFile(userList, response);
+				userIdList.clear();
+				usrIDList = "";
 			}
 		} catch (Exception e) {
 			// TODO Auto-generated catch block
@@ -206,10 +276,10 @@ public class UserDataExportListController extends SimpleFormController {
 		cell = row.createCell(14);
 		cell.setCellValue(user.getPerson().getGender());
 		cell = row.createCell(15);
-		if(user.getPerson().getBirthdate() != null) {
+		if (user.getPerson().getBirthdate() != null) {
 			String data = String.valueOf(user.getPerson().getBirthdate());
-			cell.setCellValue(data);	
-		}			
+			cell.setCellValue(data);
+		}
 		cell = row.createCell(16);
 		cell.setCellValue(user.getPerson().getUuid());
 		cell = row.createCell(17);
@@ -244,7 +314,7 @@ public class UserDataExportListController extends SimpleFormController {
 		cellUsersecretQuestion.setCellValue("Secret Question");
 		Cell cellUsersecretAnswer = row.createCell(5);
 		cellUsersecretAnswer.setCellStyle(cellStyle);
-		cellUsersecretAnswer.setCellValue("Secret Answer");		
+		cellUsersecretAnswer.setCellValue("Secret Answer");
 		Cell cellUserName = row.createCell(6);
 		cellUserName.setCellStyle(cellStyle);
 		cellUserName.setCellValue("UserName");
@@ -306,9 +376,9 @@ public class UserDataExportListController extends SimpleFormController {
 			sheet.setColumnWidth(13, 8000);
 			sheet.setColumnWidth(14, 8000);
 			sheet.setColumnWidth(15, 8000);
-			sheet.setColumnWidth(16, 8000);	
-			sheet.setColumnWidth(17, 8000);	
-			sheet.setColumnWidth(18, 8000);	
+			sheet.setColumnWidth(16, 8000);
+			sheet.setColumnWidth(17, 8000);
+			sheet.setColumnWidth(18, 8000);
 			createHeaderRow((Sheet) sheet);
 			int rowCount = 0;
 			for (User user : listUser) {
@@ -327,10 +397,9 @@ public class UserDataExportListController extends SimpleFormController {
 			outStream.close();
 		}
 	}
-	
-	public String removeFirstandLast(String str)
-    {
-        str = str.substring(1, str.length() - 1);
-        return str;
-    }
+
+	public String removeFirstandLast(String str) {
+		str = str.substring(1, str.length() - 1);
+		return str;
+	}
 }

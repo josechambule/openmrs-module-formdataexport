@@ -61,14 +61,35 @@
 }
 </style>
 <script type="text/javascript">
+
 	function search() {
 		var searchByName = document.getElementById("searchId");
 		window.location.assign("userDataExport.list?searchId=" + searchByName);
 	}
+		
+	function addUserId(pageId,recordsPerPage) {
+		var cboxes = document.getElementsByName('checkButton');
+	    var len = cboxes.length;
+	    var index = "";
+	    for (var i=0; i<len; i++) {
+	    	if(cboxes[i].checked) {
+	    		index = index + cboxes[i].value + "a";
+	    	}	        
+	    }
+	    
+	    var pesquisaId = document.getElementById('searchForm').elements['searchId'].value;
+	    
+	    if(index!="") {
+	    	window.location.assign("userDataExport.list?page="+ pageId + "&recordsPerPage=" + recordsPerPage + "&searchId=" + pesquisaId + "&userIDList=" + index);
+	    }else {
+	    	window.location.assign("userDataExport.list?page="+ pageId + "&recordsPerPage=" + recordsPerPage + "&searchId=" + pesquisaId);
+	    }
+	}
+	
 </script>
 <b class="boxHeader">Select User</b>
 <div class="box">
-	<form action="" method="get">
+	<form action="" method="get" name="searchForm" id="searchForm">
 		<div class="row" align="left">
 			<table style="width: 100%;" cellpadding="5" cellspacing="5">
 				<tr>
@@ -83,11 +104,13 @@
 		</div>
 	</form>
 	<form method="post">
+		
 		<div class="row" align="left">
 			<table class="styled-table" style="width: 99%; margin-left: 5px;"
 				cellpadding="5" cellspacing="5">
 				<thead>
 					<tr>
+						<th>Select User</th>
 						<th>User Id</th>
 						<th>System Id</th>
 						<th>User Name</th>
@@ -102,6 +125,7 @@
 				<tbody>
 					<c:forEach var="user" items="${userList}">
 						<tr>
+							<td><input type="checkbox" name="checkButton" value="${user.userId}"></td>
 							<td>${user.userId}</td>
 							<td>${user.systemId}</td>
 							<td>${user.username}</td>
@@ -130,10 +154,10 @@
 						</select></td>
 						<%--For displaying Previous link except for the 1st page --%>
 						<c:if test="${currentPage != 1}">
-							<td><a href="userDataExport.list?page=${1}">First</a></td>
+							<td><a href="#" onclick="addUserId(${1},${recordsPerPage})">First</a></td>
 						</c:if>
 						<c:if test="${currentPage != 1}">
-							<td><a href="userDataExport.list?page=${currentPage - 1}">Previous</a></td>
+							<td><a href="#" onclick="addUserId(${currentPage - 1},${recordsPerPage})">Previous</a></td>
 						</c:if>
 
 						<%--For displaying Page numbers. 
@@ -141,26 +165,26 @@
 
 						<div class="page-nav">
 							<c:choose>
-								<c:when test="${noOfPages <= 30}">
+								<c:when test="${noOfPages <= 20}">
 									<c:forEach begin="1" end="${noOfPages}" var="i">
 										<c:choose>
 											<c:when test="${currentPage eq i}">
 												<td>${i}</td>
 											</c:when>
 											<c:otherwise>
-												<td><a href="userDataExport.list?page=${i}">${i}</a></td>
+												<td><a href="#" onclick="addUserId(${i},${recordsPerPage})">${i}</a></td>
 											</c:otherwise>
 										</c:choose>
 									</c:forEach>
 								</c:when>
 								<c:when test="${(pointPage + currentPage) >= noOfPages}">
-									<c:forEach begin="${noOfPages-30}" end="${noOfPages}" var="i">
+									<c:forEach begin="${noOfPages-20}" end="${noOfPages}" var="i">
 										<c:choose>
 											<c:when test="${currentPage eq i}">
 												<td>${i}</td>
 											</c:when>
 											<c:otherwise>
-												<td><a href="userDataExport.list?page=${i}">${i}</a></td>
+												<td><a href="#" onclick="addUserId(${i},${recordsPerPage})">${i}</a></td>
 											</c:otherwise>
 										</c:choose>
 									</c:forEach>
@@ -173,7 +197,7 @@
 												<td>${i}</td>
 											</c:when>
 											<c:otherwise>
-												<td><a href="userDataExport.list?page=${i}">${i}</a></td>
+												<td><a href="#" onclick="addUserId(${i},${recordsPerPage})">${i}</a></td>
 											</c:otherwise>
 										</c:choose>
 									</c:forEach>
@@ -183,10 +207,10 @@
 
 						<%--For displaying Next link --%>
 						<c:if test="${currentPage lt noOfPages}">
-							<td><a href="userDataExport.list?page=${currentPage + 1}">Next</a></td>
+							<td><a href="#" onclick="addUserId(${currentPage + 1},${recordsPerPage})">Next</a></td>
 						</c:if>
 						<c:if test="${currentPage lt noOfPages}">
-							<td><a href="userDataExport.list?page=${noOfPages}">Last</a></td>
+							<td><a href="#" onclick="addUserId(${noOfPages},${recordsPerPage})">Last</a></td>
 						</c:if>
 					</tr>
 				</table>
@@ -196,8 +220,8 @@
 		<div class="row" align="left">
 			<table style="width: 100%;" cellpadding="5" cellspacing="5">
 				<tr>
-					<td align="left" colspan="3"><br />&nbsp;&nbsp;&nbsp; <input
-						type="submit" name="export" value='Export User' /></td>
+					<td align="left" colspan="3"><br />&nbsp;&nbsp;&nbsp; 
+					<input type="submit" name="export" value='Export User' /></td>
 				</tr>
 			</table>
 		</div>
