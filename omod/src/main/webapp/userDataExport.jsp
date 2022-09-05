@@ -104,7 +104,7 @@
 		</div>
 	</form>
 	<form method="post">
-		
+
 		<div class="row" align="left">
 			<table class="styled-table" style="width: 99%; margin-left: 5px;"
 				cellpadding="5" cellspacing="5">
@@ -125,7 +125,11 @@
 				<tbody>
 					<c:forEach var="user" items="${userList}">
 						<tr>
-							<td><input type="checkbox" name="checkButton" value="${user.userId}"></td>
+							<td><input type="checkbox" name="checkButton" value="${user.userId}"
+								<c:forEach var="check" items="${checkedList}">
+										<c:if test="${user.userId == check}">checked="checked"</c:if>
+									</c:forEach>>
+							</td>
 							<td>${user.userId}</td>
 							<td>${user.systemId}</td>
 							<td>${user.username}</td>
@@ -157,7 +161,8 @@
 							<td><a href="#" onclick="addUserId(${1},${recordsPerPage})">First</a></td>
 						</c:if>
 						<c:if test="${currentPage != 1}">
-							<td><a href="#" onclick="addUserId(${currentPage - 1},${recordsPerPage})">Previous</a></td>
+							<td><a href="#"
+								onclick="addUserId(${currentPage - 1},${recordsPerPage})">Previous</a></td>
 						</c:if>
 
 						<%--For displaying Page numbers. 
@@ -172,7 +177,8 @@
 												<td>${i}</td>
 											</c:when>
 											<c:otherwise>
-												<td><a href="#" onclick="addUserId(${i},${recordsPerPage})">${i}</a></td>
+												<td><a href="#"
+													onclick="addUserId(${i},${recordsPerPage})">${i}</a></td>
 											</c:otherwise>
 										</c:choose>
 									</c:forEach>
@@ -184,7 +190,8 @@
 												<td>${i}</td>
 											</c:when>
 											<c:otherwise>
-												<td><a href="#" onclick="addUserId(${i},${recordsPerPage})">${i}</a></td>
+												<td><a href="#"
+													onclick="addUserId(${i},${recordsPerPage})">${i}</a></td>
 											</c:otherwise>
 										</c:choose>
 									</c:forEach>
@@ -197,7 +204,8 @@
 												<td>${i}</td>
 											</c:when>
 											<c:otherwise>
-												<td><a href="#" onclick="addUserId(${i},${recordsPerPage})">${i}</a></td>
+												<td><a href="#"
+													onclick="addUserId(${i},${recordsPerPage})">${i}</a></td>
 											</c:otherwise>
 										</c:choose>
 									</c:forEach>
@@ -207,10 +215,12 @@
 
 						<%--For displaying Next link --%>
 						<c:if test="${currentPage lt noOfPages}">
-							<td><a href="#" onclick="addUserId(${currentPage + 1},${recordsPerPage})">Next</a></td>
+							<td><a href="#"
+								onclick="addUserId(${currentPage + 1},${recordsPerPage})">Next</a></td>
 						</c:if>
 						<c:if test="${currentPage lt noOfPages}">
-							<td><a href="#" onclick="addUserId(${noOfPages},${recordsPerPage})">Last</a></td>
+							<td><a href="#"
+								onclick="addUserId(${noOfPages},${recordsPerPage})">Last</a></td>
 						</c:if>
 					</tr>
 				</table>
@@ -220,8 +230,8 @@
 		<div class="row" align="left">
 			<table style="width: 100%;" cellpadding="5" cellspacing="5">
 				<tr>
-					<td align="left" colspan="3"><br />&nbsp;&nbsp;&nbsp; 
-					<input type="submit" name="export" value='Export User' /></td>
+					<td align="left" colspan="3"><br />&nbsp;&nbsp;&nbsp; <input
+						type="submit" name="export" value='Export User' /></td>
 				</tr>
 			</table>
 		</div>

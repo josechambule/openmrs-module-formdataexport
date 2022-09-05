@@ -124,6 +124,7 @@ public class UserDataExportListController extends SimpleFormController {
 			request.setAttribute("recordsPerPageList", getListRecordsPerPage());
 			request.setAttribute("recordsPerPage", recordsPerPage);
 			request.setAttribute("userIDList", usrIDList);
+			request.setAttribute("checkedList", userIdList);
 
 			return list;
 		}
