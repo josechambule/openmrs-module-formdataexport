@@ -45,6 +45,7 @@ public class UserDataExportListController extends SimpleFormController {
 	private UserDataExportService userDataExportService;
 	private List<Integer> userIdList = new ArrayList<Integer>();
 	private String usrIDList = "";
+	private int allCheckBoxSelected = 0;
 
 	@Autowired
 	public void setUserDataExportService(UserDataExportService userDataExportService) {
@@ -64,6 +65,12 @@ public class UserDataExportListController extends SimpleFormController {
 			List<User> list = new ArrayList<User>();			
 			String searchId = ServletRequestUtils.getStringParameter((ServletRequest) request, "searchId", "");
 			usrIDList = usrIDList + ServletRequestUtils.getStringParameter(request, "userIDList", "");
+			allCheckBoxSelected = ServletRequestUtils.getIntParameter(request, "allCheckBoxSelected", 0);
+			
+			if(ServletRequestUtils.getStringParameter(request, "userIDList", "").equalsIgnoreCase("a")) {
+				usrIDList = "";
+				userIdList.clear();
+			}
 			
 			if(!usrIDList.equalsIgnoreCase("")) {
 				String[] result = usrIDList.split("a");
@@ -125,6 +132,7 @@ public class UserDataExportListController extends SimpleFormController {
 			request.setAttribute("recordsPerPage", recordsPerPage);
 			request.setAttribute("userIDList", usrIDList);
 			request.setAttribute("checkedList", userIdList);
+			request.setAttribute("allCheckBoxSelected", allCheckBoxSelected);
 
 			return list;
 		}
@@ -200,6 +208,9 @@ public class UserDataExportListController extends SimpleFormController {
 
 				createExcelFile(userList, response);
 				userIdList.clear();
+				request.setAttribute("userIDList", "");
+				request.setAttribute("checkedList", "");
+				request.setAttribute("allCheckBoxSelected", 0);
 				usrIDList = "";
 			}
 		} catch (Exception e) {

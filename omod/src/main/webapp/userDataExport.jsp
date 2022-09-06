@@ -61,28 +61,49 @@
 }
 </style>
 <script type="text/javascript">
-
+	var index = "";
 	function search() {
 		var searchByName = document.getElementById("searchId");
 		window.location.assign("userDataExport.list?searchId=" + searchByName);
 	}
+	
+    function selectAllCheckBoxes() {
+    	var checkboxes = document.getElementsByName('checkButton');
+    	var checkall = document.getElementsByName('checkAll');
+    	var len = checkboxes.length;
+    	for (var i=0; i<len; i++) {
+    		checkboxes[i].checked = checkall[0].checked;
+    	}
+    	
+    	if (!checkall[0].checked){
+    		index = "a";
+    	}
+    }    
 		
 	function addUserId(pageId,recordsPerPage) {
 		var cboxes = document.getElementsByName('checkButton');
+		var checkall = document.getElementsByName('checkAll');
 	    var len = cboxes.length;
-	    var index = "";
+	    var allcheckbox = 0;
+	    
 	    for (var i=0; i<len; i++) {
 	    	if(cboxes[i].checked) {
 	    		index = index + cboxes[i].value + "a";
 	    	}	        
 	    }
 	    
+	    if(checkall[0].checked) {
+	    	allcheckbox = 1;
+	    } else {
+	    	allcheckbox = 0;
+	    }
+	    
 	    var pesquisaId = document.getElementById('searchForm').elements['searchId'].value;
 	    
 	    if(index!="") {
-	    	window.location.assign("userDataExport.list?page="+ pageId + "&recordsPerPage=" + recordsPerPage + "&searchId=" + pesquisaId + "&userIDList=" + index);
+	    	window.location.assign("userDataExport.list?page="+ pageId + "&recordsPerPage=" + recordsPerPage + "&searchId=" + pesquisaId + "&userIDList=" + index + "&allCheckBoxSelected=" + allcheckbox);
 	    }else {
-	    	window.location.assign("userDataExport.list?page="+ pageId + "&recordsPerPage=" + recordsPerPage + "&searchId=" + pesquisaId);
+	    	window.location.assign("userDataExport.list?page="+ pageId + "&recordsPerPage=" + recordsPerPage + "&searchId=" + pesquisaId + "&allCheckBoxSelected=" + allcheckbox);
 	    }
 	}
 	
@@ -110,7 +131,7 @@
 				cellpadding="5" cellspacing="5">
 				<thead>
 					<tr>
-						<th>Select User</th>
+						<th><input type="checkbox" name="checkAll" id="selectAll" value="${allCheckBoxSelected}" onclick="selectAllCheckBoxes()" <c:if test="${allCheckBoxSelected == 1}">checked="checked"</c:if>>Select User</th>
 						<th>User Id</th>
 						<th>System Id</th>
 						<th>User Name</th>
@@ -125,7 +146,7 @@
 				<tbody>
 					<c:forEach var="user" items="${userList}">
 						<tr>
-							<td><input type="checkbox" name="checkButton" value="${user.userId}"
+							<td><input type="checkbox" name="checkButton" value="${user.userId}" <c:if test="${allCheckBoxSelected == 1}">checked="checked"</c:if>
 								<c:forEach var="check" items="${checkedList}">
 										<c:if test="${user.userId == check}">checked="checked"</c:if>
 									</c:forEach>>
