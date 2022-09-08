@@ -62,6 +62,9 @@
 </style>
 <script type="text/javascript">
 	var index = "";
+	var paginaCurrente = 1;
+	var registoPorPagina = 15;
+	
 	function search() {
 		var searchByName = document.getElementById("searchId");
 		window.location.assign("userDataExport.list?searchId=" + searchByName);
@@ -77,6 +80,8 @@
     	
     	if (!checkall[0].checked){
     		index = "a";
+    		var pesquisaId = document.getElementById('searchForm').elements['searchId'].value;
+    		window.location.assign("userDataExport.list?page="+ ${currentPage} + "&recordsPerPage=" + ${recordsPerPage} + "&searchId=" + pesquisaId + "&userIDList=" + index + "&allCheckBoxSelected=0");
     	}
     }    
 		
@@ -85,6 +90,8 @@
 		var checkall = document.getElementsByName('checkAll');
 	    var len = cboxes.length;
 	    var allcheckbox = 0;
+	    paginaCurrente = pageId;
+	    registoPorPagina = recordsPerPage;
 	    
 	    for (var i=0; i<len; i++) {
 	    	if(cboxes[i].checked) {

@@ -75,9 +75,11 @@ public class UserDataExportListController extends SimpleFormController {
 			if(!usrIDList.equalsIgnoreCase("")) {
 				String[] result = usrIDList.split("a");
 				for(String idusr : result) {
-					if (!userIdList.contains(Integer.valueOf(idusr))) {
-						userIdList.add(Integer.valueOf(idusr));
-					}
+					if(!idusr.equalsIgnoreCase("")) {
+						if (!userIdList.contains(Integer.valueOf(idusr))) {
+							userIdList.add(Integer.valueOf(idusr));
+						}
+					}					
 				}
 			}
 			
@@ -149,6 +151,11 @@ public class UserDataExportListController extends SimpleFormController {
 			String[] idUsr = request.getParameterValues("checkButton");
 			List<User> userList = new ArrayList<User>();
 			UserService us = Context.getUserService();
+			
+			if(ServletRequestUtils.getStringParameter(request, "userIDList", "").equalsIgnoreCase("a")) {
+				usrIDList = "";
+				userIdList.clear();
+			}
 
 			if (allUser.equalsIgnoreCase("")) {
 				if (idUsr != null) {
@@ -168,16 +175,25 @@ public class UserDataExportListController extends SimpleFormController {
 					}
 				}
 
-				if (!userIdList.isEmpty()) {
-					for (int id : userIdList) {
-						userList.add(us.getUser(id));
+				if(request.getParameter("checkAll") == null){
+				    //checkbox not checked
+					if (!userIdList.isEmpty()) {
+						for (int id : userIdList) {
+							userList.add(us.getUser(id));
+						}
+					} else {
+						//userList = us.getAllUsers();
 					}
-				} else {
+				}else{
+				    //checkbox checked
 					userList = us.getAllUsers();
 				}
 
 				createExcelFile(userList, response);
 				userIdList.clear();
+				request.setAttribute("userIDList", null);
+				request.setAttribute("checkedList", "");
+				request.setAttribute("allCheckBoxSelected", 0);
 				usrIDList = "";
 			} else {
 
@@ -197,18 +213,24 @@ public class UserDataExportListController extends SimpleFormController {
 						}
 					}
 				}
-
-				if (!userIdList.isEmpty()) {
-					for (int id : userIdList) {
-						userList.add(us.getUser(id));
+				
+				if(request.getParameter("checkAll") == null){
+				    //checkbox not checked
+					if (!userIdList.isEmpty()) {
+						for (int id : userIdList) {
+							userList.add(us.getUser(id));
+						}
+					} else {
+						//userList = (List<User>) request.getAttribute("userList");
 					}
-				} else {
+				}else{
+				    //checkbox checked
 					userList = (List<User>) request.getAttribute("userList");
-				}
-
+				}		
+				
 				createExcelFile(userList, response);
 				userIdList.clear();
-				request.setAttribute("userIDList", "");
+				request.setAttribute("userIDList", null);
 				request.setAttribute("checkedList", "");
 				request.setAttribute("allCheckBoxSelected", 0);
 				usrIDList = "";
