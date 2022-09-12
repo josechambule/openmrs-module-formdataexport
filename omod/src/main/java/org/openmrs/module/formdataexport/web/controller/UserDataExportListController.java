@@ -320,6 +320,8 @@ public class UserDataExportListController extends SimpleFormController {
 		cell.setCellValue(user.getAllRoles().toString());
 		cell = row.createCell(18);
 		cell.setCellValue(user.getPrivileges().toString());
+		cell = row.createCell(19);
+		cell.setCellValue(user.getRetireReason());
 	}
 
 	public void createHeaderRow(Sheet sheet) {
@@ -388,6 +390,9 @@ public class UserDataExportListController extends SimpleFormController {
 		Cell cellPrivileges = row.createCell(18);
 		cellPrivileges.setCellStyle(cellStyle);
 		cellPrivileges.setCellValue("Privileges");
+		Cell RetireReason = row.createCell(19);
+		RetireReason.setCellStyle(cellStyle);
+		RetireReason.setCellValue("Retired Reason");
 	}
 
 	public void createExcelFile(List<User> listUser, HttpServletResponse response) throws Exception {
@@ -413,6 +418,7 @@ public class UserDataExportListController extends SimpleFormController {
 			sheet.setColumnWidth(16, 8000);
 			sheet.setColumnWidth(17, 8000);
 			sheet.setColumnWidth(18, 8000);
+			sheet.setColumnWidth(19, 8000);
 			createHeaderRow((Sheet) sheet);
 			int rowCount = 0;
 			for (User user : listUser) {

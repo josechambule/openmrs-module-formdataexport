@@ -162,6 +162,9 @@ public class UserDataImportFormController extends SimpleFormController {
 			if (row.getCell(18) != null) {
 				
 			}
+			if (row.getCell(19) != null) {
+				user.setRetireReason(trimToNull(row.getCell(19).toString()));
+			}
 			
 			if(Context.getPersonService().getPersonByUuid(person.getUuid())!=null) {
 				user.setPerson(Context.getPersonService().getPersonByUuid(person.getUuid()));
@@ -197,6 +200,7 @@ public class UserDataImportFormController extends SimpleFormController {
 			usr.setUsername(user.getUsername());
 			usr.setSystemId(user.getSystemId());
 			usr.setEmail(user.getEmail());
+			usr.setRetireReason(user.getRetireReason());
 			userDataExportService.importUser(usr, credentials);
 		}
 	}
