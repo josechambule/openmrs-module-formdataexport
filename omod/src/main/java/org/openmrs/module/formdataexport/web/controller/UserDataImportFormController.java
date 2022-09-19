@@ -194,6 +194,10 @@ public class UserDataImportFormController extends SimpleFormController {
 		User usr = us.getUserByUuid(user.getUuid());
 		if(usr == null) {
 			user.setUserId(null);
+			user.setUserProperty("forcePassword", "true");
+			if(user.getSystemId() == null) {
+				user.setSystemId("UNDEFINED_SystemId_" + us.generateSystemId());
+			}
 			userDataExportService.importUser(user, credentials);
 		}else {			 
 			usr.setRetired(user.getRetired());
@@ -201,6 +205,10 @@ public class UserDataImportFormController extends SimpleFormController {
 			usr.setSystemId(user.getSystemId());
 			usr.setEmail(user.getEmail());
 			usr.setRetireReason(user.getRetireReason());
+			usr.setUserProperty("forcePassword", "true");
+			if(usr.getSystemId() == null) {
+				usr.setSystemId("UNDEFINED_SystemId_" + us.generateSystemId());
+			}
 			userDataExportService.importUser(usr, credentials);
 		}
 	}
