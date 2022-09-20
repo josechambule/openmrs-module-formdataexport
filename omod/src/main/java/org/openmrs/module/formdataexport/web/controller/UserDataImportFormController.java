@@ -165,6 +165,9 @@ public class UserDataImportFormController extends SimpleFormController {
 			if (row.getCell(19) != null) {
 				user.setRetireReason(trimToNull(row.getCell(19).toString()));
 			}
+			if (row.getCell(20) != null) {
+				personName.setUuid(trimToNull(row.getCell(20).toString()));
+			}
 			
 			if(Context.getPersonService().getPersonByUuid(person.getUuid())!=null) {
 				user.setPerson(Context.getPersonService().getPersonByUuid(person.getUuid()));
@@ -173,7 +176,7 @@ public class UserDataImportFormController extends SimpleFormController {
 				user.setPerson(person);
 			}
 			
-			saveImportedData(user, loginCredential);
+			saveImportedData(user, loginCredential, personName);
 			count++;
 		}
 	}
@@ -188,7 +191,7 @@ public class UserDataImportFormController extends SimpleFormController {
 		return StringUtils.trimToNull(str);
 	}
 	
-	public void saveImportedData(User user, LoginCredential credentials) {
+	public void saveImportedData(User user, LoginCredential credentials, PersonName personName) {
 		//
 		UserService us = Context.getUserService();
 		User usr = us.getUserByUuid(user.getUuid());
@@ -199,7 +202,7 @@ public class UserDataImportFormController extends SimpleFormController {
 				user.setSystemId("UNDEFINED_SystemId_" + us.generateSystemId());
 			}
 			userDataExportService.importUser(user, credentials);
-		}else {			 
+		}else {	
 			usr.setRetired(user.getRetired());
 			usr.setUsername(user.getUsername());
 			usr.setSystemId(user.getSystemId());
@@ -210,6 +213,15 @@ public class UserDataImportFormController extends SimpleFormController {
 				usr.setSystemId("UNDEFINED_SystemId_" + us.generateSystemId());
 			}
 			userDataExportService.importUser(usr, credentials);
+			
+			if(personName.getUuid() != null) {
+				PersonName pn = Context.getPersonService().getPersonNameByUuid(personName.getUuid());
+				pn.setFamilyName(personName.getFamilyName());
+				pn.setGivenName(personName.getGivenName());
+				pn.setMiddleName(personName.getMiddleName());
+				
+				Context.getPersonService().savePersonName(pn);
+			}
 		}
 	}
 }
