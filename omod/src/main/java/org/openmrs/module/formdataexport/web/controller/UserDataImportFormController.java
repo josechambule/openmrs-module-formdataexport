@@ -25,6 +25,7 @@ import org.apache.poi.hssf.usermodel.HSSFWorkbook;
 import org.apache.poi.ss.usermodel.Row;
 import org.openmrs.Person;
 import org.openmrs.PersonName;
+import org.openmrs.Provider;
 import org.openmrs.Role;
 import org.openmrs.User;
 import org.openmrs.api.UserService;
@@ -93,6 +94,8 @@ public class UserDataImportFormController extends SimpleFormController {
 			LoginCredential loginCredential = new LoginCredential();
 			Person person = new Person();
 			PersonName personName = new PersonName();
+			Provider provider = new Provider();
+			
 			if (row.getCell(0) != null) {
 				user.setUserId((int) row.getCell(0).getNumericCellValue());
 			}
@@ -168,12 +171,30 @@ public class UserDataImportFormController extends SimpleFormController {
 			if (row.getCell(20) != null) {
 				personName.setUuid(trimToNull(row.getCell(20).toString()));
 			}
+			if (row.getCell(21) != null) {
+				provider.setIdentifier(trimToNull(row.getCell(21).toString()));
+				provider.setName(personName.getFullName());
+				provider.setCreator(Context.getAuthenticatedUser());
+			}
+			if (row.getCell(22) != null) {
+				provider.setUuid(trimToNull(row.getCell(22).toString()));
+			}
+			if (row.getCell(23) != null) {
+				provider.setRetired(row.getCell(23).getBooleanCellValue());
+			}
 			
 			if(Context.getPersonService().getPersonByUuid(person.getUuid())!=null) {
 				user.setPerson(Context.getPersonService().getPersonByUuid(person.getUuid()));
 			}else {
 				person.addName(personName);
 				user.setPerson(person);
+			}
+			
+			if (provider.getUuid() != null) {
+				if(Context.getProviderService().getProviderByUuid(provider.getUuid())==null) {
+					provider.setPerson(user.getPerson());
+					Context.getProviderService().saveProvider(provider);
+				}
 			}
 			
 			saveImportedData(user, loginCredential, personName);

@@ -23,9 +23,11 @@ import javax.servlet.ServletException;
 import org.openmrs.api.UserService;
 import java.util.List;
 import java.util.ArrayList;
+import java.util.Collection;
 
 import org.openmrs.api.context.Context;
 import org.openmrs.api.db.LoginCredential;
+import org.openmrs.Provider;
 import org.openmrs.User;
 import java.util.Vector;
 import javax.servlet.http.HttpServletRequest;
@@ -279,6 +281,7 @@ public class UserDataExportListController extends SimpleFormController {
 	private void writeUserList(User user, Row row) {
 		LoginCredential loginCredential = new LoginCredential();
 		loginCredential = userDataExportService.getUserLoginCredential(user);
+		Collection<Provider> provider = Context.getProviderService().getProvidersByPerson(user.getPerson());
 		Cell cell = row.createCell(0);
 		cell.setCellValue((double) user.getUserId());
 		cell = row.createCell(1);
@@ -324,6 +327,25 @@ public class UserDataExportListController extends SimpleFormController {
 		cell.setCellValue(user.getRetireReason());
 		cell = row.createCell(20);
 		cell.setCellValue(user.getPerson().getPersonName().getUuid());
+		
+		String valueProvider = "";
+		String proUUID = "";
+		String retiredPro = "";
+		
+		if(provider.size()>=1){
+			for(Provider pro:provider) {
+				valueProvider = pro.getIdentifier();
+				proUUID = pro.getUuid();
+				retiredPro =  pro.getRetired().toString();
+			}
+		}		
+		
+		cell = row.createCell(21);
+		cell.setCellValue(valueProvider);
+		cell = row.createCell(22);
+		cell.setCellValue(proUUID);
+		cell = row.createCell(23);
+		cell.setCellValue(Boolean.valueOf(retiredPro));
 	}
 
 	public void createHeaderRow(Sheet sheet) {
@@ -398,6 +420,15 @@ public class UserDataExportListController extends SimpleFormController {
 		Cell PersonNameUUID = row.createCell(20);
 		PersonNameUUID.setCellStyle(cellStyle);
 		PersonNameUUID.setCellValue("Person Name UUID");
+		Cell providerIdentifier = row.createCell(21);
+		providerIdentifier.setCellStyle(cellStyle);
+		providerIdentifier.setCellValue("Provider Identifier");
+		Cell providerUUID = row.createCell(22);
+		providerUUID.setCellStyle(cellStyle);
+		providerUUID.setCellValue("Provider UUID");
+		Cell providerRetired = row.createCell(23);
+		providerRetired.setCellStyle(cellStyle);
+		providerRetired.setCellValue("Provider Retired");
 	}
 
 	public void createExcelFile(List<User> listUser, HttpServletResponse response) throws Exception {
@@ -425,6 +456,9 @@ public class UserDataExportListController extends SimpleFormController {
 			sheet.setColumnWidth(18, 8000);
 			sheet.setColumnWidth(19, 8000);
 			sheet.setColumnWidth(20, 8000);
+			sheet.setColumnWidth(21, 8000);
+			sheet.setColumnWidth(22, 8000);
+			sheet.setColumnWidth(23, 8000);
 			createHeaderRow((Sheet) sheet);
 			int rowCount = 0;
 			for (User user : listUser) {
