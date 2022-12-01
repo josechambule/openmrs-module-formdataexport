@@ -331,12 +331,14 @@ public class UserDataExportListController extends SimpleFormController {
 		String valueProvider = "";
 		String proUUID = "";
 		String retiredPro = "";
+		String retiredRisonPro = "";
 		
 		if(provider.size()>=1){
 			for(Provider pro:provider) {
 				valueProvider = pro.getIdentifier();
 				proUUID = pro.getUuid();
 				retiredPro =  pro.getRetired().toString();
+				retiredRisonPro = pro.getRetireReason();
 			}
 		}		
 		
@@ -346,6 +348,8 @@ public class UserDataExportListController extends SimpleFormController {
 		cell.setCellValue(proUUID);
 		cell = row.createCell(23);
 		cell.setCellValue(Boolean.valueOf(retiredPro));
+		cell = row.createCell(24);
+		cell.setCellValue(retiredRisonPro);
 	}
 
 	public void createHeaderRow(Sheet sheet) {
@@ -429,6 +433,9 @@ public class UserDataExportListController extends SimpleFormController {
 		Cell providerRetired = row.createCell(23);
 		providerRetired.setCellStyle(cellStyle);
 		providerRetired.setCellValue("Provider Retired");
+		Cell providerRetireReason = row.createCell(24);
+		providerRetireReason.setCellStyle(cellStyle);
+		providerRetireReason.setCellValue("Provider Retire Reason");
 	}
 
 	public void createExcelFile(List<User> listUser, HttpServletResponse response) throws Exception {
@@ -459,6 +466,7 @@ public class UserDataExportListController extends SimpleFormController {
 			sheet.setColumnWidth(21, 8000);
 			sheet.setColumnWidth(22, 8000);
 			sheet.setColumnWidth(23, 8000);
+			sheet.setColumnWidth(24, 8000);
 			createHeaderRow((Sheet) sheet);
 			int rowCount = 0;
 			for (User user : listUser) {

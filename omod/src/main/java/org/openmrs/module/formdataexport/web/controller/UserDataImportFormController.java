@@ -182,6 +182,9 @@ public class UserDataImportFormController extends SimpleFormController {
 			if (row.getCell(23) != null) {
 				provider.setRetired(row.getCell(23).getBooleanCellValue());
 			}
+			if (row.getCell(24) != null) {
+				provider.setRetireReason(trimToNull(row.getCell(24).toString()));
+			}
 			
 			if(Context.getPersonService().getPersonByUuid(person.getUuid())!=null) {
 				user.setPerson(Context.getPersonService().getPersonByUuid(person.getUuid()));
