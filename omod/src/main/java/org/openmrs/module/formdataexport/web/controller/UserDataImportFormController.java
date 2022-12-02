@@ -193,14 +193,14 @@ public class UserDataImportFormController extends SimpleFormController {
 				user.setPerson(person);
 			}
 			
+			saveImportedData(user, loginCredential, personName);
+			
 			if (provider.getUuid() != null) {
 				if(Context.getProviderService().getProviderByUuid(provider.getUuid())==null) {
 					provider.setPerson(user.getPerson());
 					Context.getProviderService().saveProvider(provider);
 				}
 			}
-			
-			saveImportedData(user, loginCredential, personName);
 			count++;
 		}
 	}
@@ -221,7 +221,7 @@ public class UserDataImportFormController extends SimpleFormController {
 		User usr = us.getUserByUuid(user.getUuid());
 		if(usr == null) {
 			user.setUserId(null);
-			user.setUserProperty("forcePassword", "true");
+			user.setUserProperty("forcePassword", "false");
 			if(user.getSystemId() == null) {
 				user.setSystemId("UNDEFINED_SystemId_" + us.generateSystemId());
 			}
@@ -232,7 +232,7 @@ public class UserDataImportFormController extends SimpleFormController {
 			usr.setSystemId(user.getSystemId());
 			usr.setEmail(user.getEmail());
 			usr.setRetireReason(user.getRetireReason());
-			usr.setUserProperty("forcePassword", "true");
+			usr.setUserProperty("forcePassword", "false");
 			if(usr.getSystemId() == null) {
 				usr.setSystemId("UNDEFINED_SystemId_" + us.generateSystemId());
 			}
