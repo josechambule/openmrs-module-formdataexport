@@ -220,9 +220,16 @@ public class UserDataImportFormController extends SimpleFormController {
 				saveImportedData(user, loginCredential, personName);
 				
 				if (provider.getUuid() != null) {
-					if(Context.getProviderService().getProviderByUuid(provider.getUuid())==null) {
+					Provider pro = Context.getProviderService().getProviderByUuid(provider.getUuid());
+					if(pro==null) {
 						provider.setPerson(user.getPerson());
 						Context.getProviderService().saveProvider(provider);
+					}else {
+						pro.setIdentifier(provider.getIdentifier());
+						pro.setName(personName.getFullName());
+						pro.setRetired(provider.getRetired());
+						pro.setRetireReason(provider.getRetireReason());
+						Context.getProviderService().saveProvider(pro);
 					}
 				}
 				count++;
